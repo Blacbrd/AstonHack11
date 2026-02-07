@@ -12,50 +12,49 @@ const PoseSession = () => {
   const [annotatedImage, setAnnotatedImage] = useState(null);
   const [poseStats, setPoseStats] = useState({});
 
-  // refs for throttling/backpressure
+  // Refs for throttling/backpressure
   const lastSentRef = useRef(0);
-  const wsBusyRef = useRef(false); // true while waiting for server response
+  const wsBusyRef = useRef(false); 
   const runningRef = useRef(true);
 
-  // Choose lower resolution for sending to server to reduce payload
+  // Lower resolution for faster transmission
   const videoConstraints = {
     width: 320,
     height: 240,
     facingMode: "user"
   };
 
+  // 1. WebSocket Setup
   useEffect(() => {
     runningRef.current = true;
-    // init ws
     ws.current = new WebSocket("ws://127.0.0.1:8000/ws/analyze");
+    
     ws.current.onopen = () => console.log("Connected to WebSocket");
+    
     ws.current.onmessage = (event) => {
       try {
         const response = JSON.parse(event.data);
-        // server may send annotated image + stats
         if (response.image) setAnnotatedImage(response.image);
         if (response.stats) setPoseStats(response.stats);
       } catch (e) {
         console.error("Error parsing WS message", e);
       } finally {
-        // server responded; allow next frame to be sent
         wsBusyRef.current = false;
       }
     };
+    
     ws.current.onclose = () => console.log("WebSocket Disconnected");
-    ws.current.onerror = (e) => console.warn("WS error", e);
-
+    
     return () => {
       runningRef.current = false;
       if (ws.current) ws.current.close();
     };
   }, []);
 
-  // capture loop using requestAnimationFrame + throttling + backpressure
+  // 2. Capture Loop
   useEffect(() => {
     let rafId = null;
-
-    const targetFps = 15; // ~15 FPS to the server (feel smooth locally)
+    const targetFps = 15; 
     const minInterval = 1000 / targetFps;
 
     const loop = (ts) => {
@@ -67,13 +66,11 @@ const PoseSession = () => {
         ws.current.readyState === WebSocket.OPEN &&
         !wsBusyRef.current &&
         webcamRef.current &&
-        webcamRef.current.getCanvas; // react-webcam provides video via ref
+        webcamRef.current.getCanvas;
 
       if (canSend && now - lastSentRef.current >= minInterval) {
-        // getScreenshot returns a base64 dataURL at the video constraints resolution
-        const screenshot = webcamRef.current.getScreenshot(); // uses videoConstraints resolution
+        const screenshot = webcamRef.current.getScreenshot();
         if (screenshot) {
-          // set busy (backpressure) until a server reply arrives
           wsBusyRef.current = true;
           lastSentRef.current = now;
           try {
@@ -87,12 +84,10 @@ const PoseSession = () => {
           }
         }
       }
-
       rafId = requestAnimationFrame(loop);
     };
 
     rafId = requestAnimationFrame(loop);
-
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
     };
@@ -101,8 +96,8 @@ const PoseSession = () => {
   return (
     <div className="pose-session-container">
       <div className="pose-session-header">
-        <button
-          className="pose-session-back-btn"
+        <button 
+          className="pose-session-back-btn" 
           onClick={() => navigate('/yoga')}
         >
           ← End Session
@@ -113,8 +108,9 @@ const PoseSession = () => {
       </div>
 
       <div className="pose-session-content">
-        {/* Video wrapper: show the live webcam feed (visible) so it's instant/smooth */}
+        {/* Video Area */}
         <div className="pose-session-video-wrapper">
+          {/* Live Webcam Feed (Bottom Layer) */}
           <Webcam
             ref={webcamRef}
             screenshotFormat="image/jpeg"
@@ -122,26 +118,26 @@ const PoseSession = () => {
             className="pose-session-media pose-session-webcam"
             videoConstraints={videoConstraints}
           />
-
-          {/* Annotated image arrives asynchronously — displayed as overlay (top) */}
+          
+          {/* Annotated AI Overlay (Top Layer) */}
           {annotatedImage && (
-            <img
-              src={annotatedImage}
-              alt="AI Overlay"
-              className="pose-session-media pose-session-annotated"
+            <img 
+              src={annotatedImage} 
+              alt="AI Overlay" 
+              className="pose-session-media pose-session-annotated" 
             />
           )}
 
-          {/* When annotated image not present, show loading text on top of video */}
+          {/* Loading State */}
           {!annotatedImage && (
             <div className="pose-session-loading">Loading Vision Model...</div>
           )}
         </div>
 
-        {/* Stats panel */}
-        <aside className="pose-session-stats-panel" aria-live="polite">
+        {/* Stats Area */}
+        <aside className="pose-session-stats-panel">
           <h3 className="pose-session-stats-title">Live Metrics</h3>
-
+          
           {Object.keys(poseStats).length > 0 ? (
             Object.entries(poseStats).map(([key, value]) => (
               <div key={key} className="pose-session-stat-item">
@@ -150,7 +146,7 @@ const PoseSession = () => {
               </div>
             ))
           ) : (
-            <div className="pose-session-stat-empty">
+            <div className="pose-session-stat-empty" style={{color: '#666', fontStyle: 'italic', textAlign: 'center', marginTop: '50px'}}>
               <p>Get in frame to start...</p>
             </div>
           )}

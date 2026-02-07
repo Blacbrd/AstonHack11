@@ -5,7 +5,7 @@ import base64
 import json
 
 # Import specific pose logic
-from poses import tree, warrior
+from poses import tree, warrior, sphinx
 
 class PoseAnalysisWorker:
     def __init__(self):
@@ -49,11 +49,13 @@ class PoseAnalysisWorker:
                 self.mp_pose.POSE_CONNECTIONS
             )
 
-            # Route to the correct calculation file and CAPTURE the stats
+            # Route to the correct calculation file
             if mode == 'tree':
                 pose_stats = tree.process(image, results.pose_landmarks.landmark, self.mp_pose)
             elif mode == 'warrior':
                 pose_stats = warrior.process(image, results.pose_landmarks.landmark, self.mp_pose)
+            elif mode == 'sphinx':
+                pose_stats = sphinx.process(image, results.pose_landmarks.landmark, self.mp_pose)
 
         # 4. Encode back to Base64 to return to React
         _, buffer = cv2.imencode('.jpg', image)
