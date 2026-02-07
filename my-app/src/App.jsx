@@ -3,7 +3,6 @@ import { useState } from 'react'
 
 // --- Pages ---
 import Landing from './pages/Landing'
-import Home from './pages/Home' // Keeping Home available if needed, or Landing replaces it
 import Yoga from './pages/Yoga'
 import PoseSession from './pages/PoseSession'
 
@@ -45,9 +44,6 @@ export default function App() {
       <Routes>
         {/* Main Entry Point */}
         <Route path="/" element={<Landing />} />
-
-        {/* Optional: Old Home Dashboard if you still want to access it */}
-        <Route path="/home" element={<Home />} />
 
         {/* -------- Yoga Routes -------- */}
         <Route path="/yoga" element={<Yoga />} />
