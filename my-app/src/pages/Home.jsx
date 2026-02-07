@@ -6,11 +6,16 @@ export default function Home() {
   return (
     <div style={{ padding: '40px' }}>
       <h1>Home</h1>
-      <button onClick={() => navigate('/journal')}>
-        Go to My Journal
+
+      <button onClick={() => navigate('/journal')}>My Journal</button>
+
+      <button onClick={() => navigate('/diet')} style={{ marginLeft: 12 }}>
+        Diet
+      </button>
+
+      <button onClick={() => navigate('/sleep')} style={{ marginLeft: 12 }}>
+        Sleep
       </button>
     </div>
   )
 }
-
-
