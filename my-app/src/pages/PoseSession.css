@@ -1,0 +1,162 @@
+/* PoseSession.css */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.pose-session-container {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  background-color: #121212;
+  color: #fff;
+  overflow: hidden;
+  font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* Header */
+.pose-session-header {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  background-color: #1e1e1e;
+  border-bottom: 1px solid #333;
+  gap: 20px;
+}
+
+.pose-session-back-btn {
+  padding: 8px 16px;
+  background-color: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.pose-session-title {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.pose-session-mode {
+  color: #646cff;
+  margin-left: 6px;
+  font-weight: 800;
+}
+
+/* Content */
+.pose-session-content {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  padding: 20px;
+  gap: 20px;
+  overflow: hidden;
+}
+
+/* Video wrapper */
+.pose-session-video-wrapper {
+  flex: 0 0 calc(100% - 380px); /* explicit width so stats panel + paddings fit */
+  max-width: calc(100% - 380px);
+  position: relative;
+  background-color: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 240px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* The media (both webcam preview and annotated overlay)
+   Webcam preview is now VISIBLE so local video feels smooth.
+   Annotated overlay sits above it.
+*/
+.pose-session-media {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  top: 0;
+  left: 0;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Make the live webcam preview visible and behind the annotated overlay */
+.pose-session-webcam {
+  opacity: 1; /* make preview visible for instant feedback */
+  z-index: 1;
+}
+
+/* Annotated image (from server) sits on top of webcam feed */
+.pose-session-annotated {
+  z-index: 2;
+  pointer-events: none;
+  /* optionally slightly transparent so overlay blends: uncomment if desired */
+  /* opacity: 0.95; */
+}
+
+/* Loading text shows while annotated image not received (on top of preview) */
+.pose-session-loading {
+  z-index: 3;
+  color: #999;
+  font-size: 1.2rem;
+  text-align: center;
+  padding: 12px;
+}
+
+/* Stats panel */
+.pose-session-stats-panel {
+  width: 320px;
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  border: 1px solid #333;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Stats items */
+.pose-session-stats-title {
+  margin: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #444;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #dcdcdc;
+}
+
+.pose-session-stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: #2c2c2c;
+  border-radius: 8px;
+  border: 1px solid #3e3e3e;
+}
+
+.pose-session-stat-label { color: #b0b0b0; font-size: 0.9rem; font-weight: 500; }
+.pose-session-stat-value { color: #fff; font-weight: 700; font-size: 1.05rem; }
+
+/* Responsive: stack on narrow screens */
+@media (max-width: 940px) {
+  .pose-session-content { flex-direction: column; padding: 14px; }
+  .pose-session-stats-panel { width: 100%; max-height: 35vh; order: 2; }
+  .pose-session-video-wrapper { order: 1; flex: 1 1 auto; max-width: 100%; height: calc(100vh - 60px - 35vh - 40px); min-height: 320px; }
+}
