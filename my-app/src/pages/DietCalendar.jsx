@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabaseClient' // Make sure path is correct
 import PageShell from '../components/PageShell'
 
 function pad2(n) {
@@ -10,14 +11,45 @@ function toDateKey(dateObj) {
   return `${dateObj.getFullYear()}-${pad2(dateObj.getMonth() + 1)}-${pad2(dateObj.getDate())}`
 }
 
-export default function DietCalendar({ dietLogs }) {
+export default function DietCalendar() {
   const navigate = useNavigate()
+  const [loggedDates, setLoggedDates] = useState({}) // Stores date keys that have data
+
+  useEffect(() => {
+    fetchDietLogs()
+  }, [])
+
+  const fetchDietLogs = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Fetch only the dates that have at least one meal filled
+      const { data, error } = await supabase
+        .from('diet_logs')
+        .select('date, breakfast, lunch, dinner')
+        .eq('user_id', user.id)
+
+      if (error) throw error
+
+      // Transform array into an object for fast lookup: { '2026-02-07': true }
+      const logsMap = {}
+      data.forEach(log => {
+        if (log.breakfast || log.lunch || log.dinner) {
+          logsMap[log.date] = true
+        }
+      })
+      setLoggedDates(logsMap)
+    } catch (error) {
+      console.error('Error fetching diet logs:', error.message)
+    }
+  }
 
   const today = new Date()
   const todayKey = toDateKey(today)
 
   const year = today.getFullYear()
-  const month = today.getMonth() // 0–11
+  const month = today.getMonth()
 
   const { days, firstDayOffset, monthName } = useMemo(() => {
     const first = new Date(year, month, 1)
@@ -25,7 +57,7 @@ export default function DietCalendar({ dietLogs }) {
 
     return {
       days: last.getDate(),
-      firstDayOffset: (first.getDay() + 6) % 7, // Monday = 0
+      firstDayOffset: (first.getDay() + 6) % 7,
       monthName: first.toLocaleString(undefined, { month: 'long' })
     }
   }, [year, month])
@@ -63,13 +95,7 @@ export default function DietCalendar({ dietLogs }) {
 
             const isToday = key === todayKey
             const isFuture = key > todayKey
-
-            const hasLog =
-              Boolean(
-                dietLogs[key]?.breakfast ||
-                dietLogs[key]?.lunch ||
-                dietLogs[key]?.dinner
-              )
+            const hasLog = Boolean(loggedDates[key])
 
             return (
               <button
@@ -96,13 +122,6 @@ export default function DietCalendar({ dietLogs }) {
                   position: 'relative',
                   fontWeight: 700
                 }}
-                title={
-                  isFuture
-                    ? 'Future date'
-                    : hasLog
-                    ? 'Meals logged'
-                    : 'No meals logged yet'
-                }
               >
                 {dayNum}
 

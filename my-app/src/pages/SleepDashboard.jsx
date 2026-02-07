@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabaseClient'
 import PageShell from '../components/PageShell'
 
 function pad2(n) {
@@ -14,8 +15,36 @@ function clamp(v, a, b) {
   return Math.max(a, Math.min(b, v))
 }
 
-export default function SleepDashboard({ sleepLogs }) {
+export default function SleepDashboard() {
   const navigate = useNavigate()
+  const [sleepLogs, setSleepLogs] = useState({}) // { '2026-02-07': { hours: 8 } }
+
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data, error } = await supabase
+          .from('sleep_logs')
+          .select('date, hours_slept')
+          .eq('user_id', user.id)
+
+        if (error) throw error
+
+        // Convert array to object map for easy lookup in graph logic
+        const logsMap = {}
+        data.forEach(log => {
+          logsMap[log.date] = { hours: log.hours_slept }
+        })
+        setSleepLogs(logsMap)
+      } catch (err) {
+        console.error('Error fetching sleep data:', err.message)
+      }
+    }
+    fetchData()
+  }, [])
 
   const today = new Date()
   const year = today.getFullYear()
@@ -61,7 +90,7 @@ export default function SleepDashboard({ sleepLogs }) {
     })
   }, [sleepLogs, year, month, daysInMonth])
 
-  // ---------- Bedtime calculator ----------
+  // ---------- Bedtime calculator (Local Logic) ----------
   const [wakeTime, setWakeTime] = useState('07:00')
 
   const bedtimeOptions = useMemo(() => {

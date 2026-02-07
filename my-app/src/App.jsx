@@ -1,7 +1,9 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { supabase } from './lib/supabaseClient'
 
 // --- Pages ---
+import LoginPage from './pages/LoginPage' // Ensure you have this file
 import Landing from './pages/Landing'
 import Yoga from './pages/Yoga'
 import PoseSession from './pages/PoseSession'
@@ -21,57 +23,112 @@ import SleepLog from './pages/SleepLog'
 import './App.css'
 
 export default function App() {
+  const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  // -------- Auth Listener --------
+  useEffect(() => {
+    // 1. Check active session on load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setLoading(false)
+    })
+
+    // 2. Listen for login/logout events
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+      setLoading(false)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
   // -------- Journal State --------
   const [entries, setEntries] = useState([])
   const addEntry = (entry) => setEntries((prev) => [entry, ...prev])
   const updateEntry = (updated) =>
     setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
 
-  // -------- Diet State (memory only) --------
+  // -------- Diet State --------
   const [dietLogs, setDietLogs] = useState({})
   const saveDietForDate = (dateKey, meals) => {
     setDietLogs((prev) => ({ ...prev, [dateKey]: meals }))
   }
 
-  // -------- Sleep State (memory only) --------
+  // -------- Sleep State --------
   const [sleepLogs, setSleepLogs] = useState({})
   const saveSleepForDate = (dateKey, data) => {
     setSleepLogs((prev) => ({ ...prev, [dateKey]: data }))
   }
 
+  if (loading) {
+    return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>Loading...</div>
+  }
+
   return (
     <BrowserRouter>
       <Routes>
-        {/* Main Entry Point */}
-        <Route path="/" element={<Landing />} />
+        {/* AUTH STRATEGY: 
+           If there is no session, show Login. 
+           If there is a session, show Landing.
+        */}
+        <Route 
+          path="/login" 
+          element={!session ? <LoginPage /> : <Navigate to="/" />} 
+        />
 
-        {/* -------- Yoga Routes -------- */}
-        <Route path="/yoga" element={<Yoga />} />
-        <Route path="/yoga/:poseName" element={<PoseSession />} />
+        {/* Protected Routes Wrapper */}
+        <Route 
+          path="/" 
+          element={session ? <Landing session={session} /> : <Navigate to="/login" />} 
+        />
 
-        {/* -------- Journal Routes -------- */}
-        <Route path="/journal" element={<Journaling entries={entries} />} />
+        {/* -------- Feature Routes (Protected) -------- */}
+        {/* If user tries to go here without login, redirect to login */}
+        
+        <Route 
+          path="/yoga" 
+          element={session ? <Yoga /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/yoga/:poseName" 
+          element={session ? <PoseSession /> : <Navigate to="/login" />} 
+        />
+
+        {/* Journal */}
+        <Route 
+          path="/journal" 
+          element={session ? <Journaling entries={entries} /> : <Navigate to="/login" />} 
+        />
         <Route
           path="/journal/new"
-          element={<NewEntry mode="new" addEntry={addEntry} entries={entries} />}
+          element={session ? <NewEntry mode="new" addEntry={addEntry} entries={entries} /> : <Navigate to="/login" />}
         />
         <Route
           path="/journal/:id"
-          element={<NewEntry mode="edit" updateEntry={updateEntry} entries={entries} />}
+          element={session ? <NewEntry mode="edit" updateEntry={updateEntry} entries={entries} /> : <Navigate to="/login" />}
         />
 
-        {/* -------- Diet Routes -------- */}
-        <Route path="/diet" element={<DietCalendar dietLogs={dietLogs} />} />
+        {/* Diet */}
+        <Route 
+          path="/diet" 
+          element={session ? <DietCalendar dietLogs={dietLogs} /> : <Navigate to="/login" />} 
+        />
         <Route
           path="/diet/:date"
-          element={<DietDay dietLogs={dietLogs} saveDietForDate={saveDietForDate} />}
+          element={session ? <DietDay dietLogs={dietLogs} saveDietForDate={saveDietForDate} /> : <Navigate to="/login" />}
         />
 
-        {/* -------- Sleep Routes -------- */}
-        <Route path="/sleep" element={<SleepDashboard sleepLogs={sleepLogs} />} />
+        {/* Sleep */}
+        <Route 
+          path="/sleep" 
+          element={session ? <SleepDashboard sleepLogs={sleepLogs} /> : <Navigate to="/login" />} 
+        />
         <Route
           path="/sleep/log"
-          element={<SleepLog sleepLogs={sleepLogs} saveSleepForDate={saveSleepForDate} />}
+          element={session ? <SleepLog sleepLogs={sleepLogs} saveSleepForDate={saveSleepForDate} /> : <Navigate to="/login" />}
         />
       </Routes>
     </BrowserRouter>
