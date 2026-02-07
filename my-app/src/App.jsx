@@ -1,6 +1,11 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useState } from 'react'
-import Home from './pages/Home'
+
+// --- Pages ---
+import Landing from './pages/Landing'
+import Home from './pages/Home' // Keeping Home available if needed, or Landing replaces it
+import Yoga from './pages/Yoga'
+import PoseSession from './pages/PoseSession'
 
 // Journal
 import Journaling from './pages/Journaling'
@@ -14,23 +19,23 @@ import DietDay from './pages/DietDay'
 import SleepDashboard from './pages/SleepDashboard'
 import SleepLog from './pages/SleepLog'
 
+import './App.css'
+
 export default function App() {
-  // -------- Journal --------
+  // -------- Journal State --------
   const [entries, setEntries] = useState([])
   const addEntry = (entry) => setEntries((prev) => [entry, ...prev])
   const updateEntry = (updated) =>
     setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
 
-  // -------- Diet (memory only) --------
+  // -------- Diet State (memory only) --------
   const [dietLogs, setDietLogs] = useState({})
   const saveDietForDate = (dateKey, meals) => {
     setDietLogs((prev) => ({ ...prev, [dateKey]: meals }))
   }
 
-  // -------- Sleep (memory only) --------
-  // sleepLogs[YYYY-MM-DD] = { hours: number, wakeTime: "HH:MM" }
+  // -------- Sleep State (memory only) --------
   const [sleepLogs, setSleepLogs] = useState({})
-
   const saveSleepForDate = (dateKey, data) => {
     setSleepLogs((prev) => ({ ...prev, [dateKey]: data }))
   }
@@ -38,9 +43,17 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* Main Entry Point */}
+        <Route path="/" element={<Landing />} />
 
-        {/* Journal */}
+        {/* Optional: Old Home Dashboard if you still want to access it */}
+        <Route path="/home" element={<Home />} />
+
+        {/* -------- Yoga Routes -------- */}
+        <Route path="/yoga" element={<Yoga />} />
+        <Route path="/yoga/:poseName" element={<PoseSession />} />
+
+        {/* -------- Journal Routes -------- */}
         <Route path="/journal" element={<Journaling entries={entries} />} />
         <Route
           path="/journal/new"
@@ -51,14 +64,14 @@ export default function App() {
           element={<NewEntry mode="edit" updateEntry={updateEntry} entries={entries} />}
         />
 
-        {/* Diet */}
+        {/* -------- Diet Routes -------- */}
         <Route path="/diet" element={<DietCalendar dietLogs={dietLogs} />} />
         <Route
           path="/diet/:date"
           element={<DietDay dietLogs={dietLogs} saveDietForDate={saveDietForDate} />}
         />
 
-        {/* Sleep */}
+        {/* -------- Sleep Routes -------- */}
         <Route path="/sleep" element={<SleepDashboard sleepLogs={sleepLogs} />} />
         <Route
           path="/sleep/log"
