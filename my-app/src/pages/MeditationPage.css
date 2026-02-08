@@ -1,0 +1,220 @@
+/* src/pages/MeditationPage.css */
+
+.medPage {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  color: white;
+}
+
+/* Background gradient */
+.medBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(900px 500px at 20% 10%, rgba(56,189,248,0.18), transparent 60%),
+    radial-gradient(700px 500px at 80% 30%, rgba(34,197,94,0.10), transparent 55%),
+    linear-gradient(180deg, #06111c 0%, #041a2a 35%, #022236 70%, #011827 100%);
+}
+
+/* Light rays */
+.medRays {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.35;
+  background: repeating-linear-gradient(
+    105deg,
+    rgba(255,255,255,0.08) 0px,
+    rgba(255,255,255,0.02) 60px,
+    transparent 140px
+  );
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+}
+
+/* Seaweed */
+.medSeaweed {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.medSeaweed svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes medSeaweedSway {
+  0%   { transform: translateX(0px) rotate(0deg); }
+  50%  { transform: translateX(4px) rotate(0.6deg); }
+  100% { transform: translateX(0px) rotate(0deg); }
+}
+
+.medSway {
+  transform-box: fill-box;
+  transform-origin: 50px 100px;
+  animation: medSeaweedSway 7.6s ease-in-out infinite;
+}
+
+.medD1 { animation-delay: 0.6s; }
+.medD2 { animation-delay: 2.1s; }
+
+.medThick {
+  fill: none;
+  stroke: rgba(34,197,94,0.40);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.medThin {
+  fill: none;
+  stroke: rgba(34,197,94,0.28);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+/* Foreground */
+.medContent {
+  position: relative;
+  z-index: 3;
+}
+
+.medWrap {
+  max-width: 900px;
+  margin: 48px auto;
+  padding: 0 16px;
+}
+
+/* Buttons + layout */
+.medBackBtn {
+  margin-bottom: 20px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+}
+
+.medTitle {
+  margin: 0;
+  font-size: 38px;
+  letter-spacing: -0.02em;
+}
+
+.medButtons {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.medBtn {
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 2px solid rgba(34,197,94,0.9);
+  background: rgba(34,197,94,0.10);
+  color: white;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px);
+}
+
+.medBtn:hover {
+  background: rgba(34,197,94,0.16);
+}
+
+/* Session top row */
+.medTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.medTimer {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(10px);
+}
+
+.medH2 {
+  margin: 0;
+  text-align: center;
+  flex: 1;
+}
+
+.medQuitBtn {
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.25);
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px);
+}
+
+.medQuitBtn:hover {
+  border-color: rgba(239,68,68,0.75);
+  box-shadow: 0 0 0 4px rgba(239,68,68,0.12);
+}
+
+/* Caption bubble */
+.medCaption {
+  margin-top: 16px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.5;
+  background: rgba(0,0,0,0.35);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  color: #fff;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  backdrop-filter: blur(10px);
+}
+
+.medBreathWrap {
+  margin-top: 18px;
+  display: grid;
+  place-items: center;
+}
+
+/* Error */
+.medError {
+  margin-top: 14px;
+  color: #ff6b6b;
+  white-space: pre-wrap;
+}
+
+/* Finished */
+.medFinishText {
+  opacity: 0.78;
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .medTitle { font-size: 32px; }
+  .medTopRow { flex-direction: column; align-items: stretch; }
+  .medH2 { text-align: left; }
+}
