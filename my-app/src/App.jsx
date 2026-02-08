@@ -41,14 +41,16 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // State handlers...
+  // State handlers for Personal Journal (Co-op handles its own state internally)
   const [entries, setEntries] = useState([])
   const addEntry = (entry) => setEntries((prev) => [entry, ...prev])
   const updateEntry = (updated) => setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
 
+  // State handlers for Diet
   const [dietLogs, setDietLogs] = useState({})
   const saveDietForDate = (dateKey, meals) => { setDietLogs((prev) => ({ ...prev, [dateKey]: meals })) }
 
+  // State handlers for Sleep
   const [sleepLogs, setSleepLogs] = useState({})
   const saveSleepForDate = (dateKey, data) => { setSleepLogs((prev) => ({ ...prev, [dateKey]: data })) }
 
@@ -69,10 +71,18 @@ export default function App() {
         {/* Meditation Route */}
         <Route path="/meditation" element={session ? <MeditationPage /> : <Navigate to="/login" />} />
 
-        {/* Journal */}
+        {/* Journal - List View */}
         <Route path="/journal" element={session ? <Journaling entries={entries} /> : <Navigate to="/login" />} />
+        
+        {/* Journal - Personal Editor */}
         <Route path="/journal/new" element={session ? <NewEntry mode="new" addEntry={addEntry} entries={entries} /> : <Navigate to="/login" />} />
         <Route path="/journal/:id" element={session ? <NewEntry mode="edit" updateEntry={updateEntry} entries={entries} /> : <Navigate to="/login" />} />
+
+        {/* Journal - CO-OP Editor (The route that makes it all work!) */}
+        <Route 
+          path="/journal/coop/:id" 
+          element={session ? <NewEntry mode="edit" isCoop={true} /> : <Navigate to="/login" />}
+        />
 
         {/* Diet */}
         <Route path="/diet" element={session ? <DietCalendar dietLogs={dietLogs} /> : <Navigate to="/login" />} />
@@ -81,6 +91,7 @@ export default function App() {
         {/* Sleep */}
         <Route path="/sleep" element={session ? <SleepDashboard sleepLogs={sleepLogs} /> : <Navigate to="/login" />} />
         <Route path="/sleep/log" element={session ? <SleepLog sleepLogs={sleepLogs} saveSleepForDate={saveSleepForDate} /> : <Navigate to="/login" />} />
+
       </Routes>
     </BrowserRouter>
   )

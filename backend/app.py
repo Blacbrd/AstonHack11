@@ -17,26 +17,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize pose worker safely
+# Initialize pose worker
 pose_worker = None
 try:
     pose_worker = PoseAnalysisWorker()
-    print("PoseAnalysisWorker initialized successfully.")
+    print("✅ PoseAnalysisWorker initialized.")
 except Exception as e:
-    print("Error initializing PoseAnalysisWorker:")
+    print("❌ Error initializing PoseWorker:")
     traceback.print_exc()
-    pose_worker = None
 
 class TTSRequest(BaseModel):
     text: str
 
-# --- WebSocket for Pose Analysis ---
+# --- WebSocket: SIMPLE PROCESSING ONLY ---
+# No rooms, no broadcasting. Just Input -> AI -> Output.
 @app.websocket("/ws/analyze")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     
     if pose_worker is None:
-        await websocket.close(code=1011, reason="Pose Worker failed to initialize")
+        await websocket.close(code=1011)
         return
 
     try:
@@ -47,33 +47,28 @@ async def websocket_endpoint(websocket: WebSocket):
             except json.JSONDecodeError:
                 continue
 
-            # Process frame
+            # 1. Process the frame locally
             try:
+                # process_frame returns a JSON string
                 result_json = pose_worker.process_frame(
                     message.get('image'), 
                     message.get('mode')
                 )
-            except Exception as e:
-                print("process_frame exception:", e)
-                result_json = json.dumps({"error": "processing error"})
-
-            if result_json:
+                
+                # 2. Send it RIGHT BACK to the same frontend
                 await websocket.send_text(result_json)
 
+            except Exception as e:
+                print(f"Processing Error: {e}")
+                
     except WebSocketDisconnect:
         print("Client disconnected")
-    except Exception as e:
-        print("WebSocket Error:")
-        traceback.print_exc()
 
-# --- REST Endpoint for TTS (Now with Caching) ---
 @app.post("/tts")
 def tts_endpoint(req: TTSRequest):
     text = (req.text or "").strip()
     if not text:
         raise HTTPException(status_code=400, detail="No text provided")
-    
-    # Delegates logic to tts_worker.py which handles the file check
     return get_tts_audio(text)
 
 if __name__ == "__main__":
