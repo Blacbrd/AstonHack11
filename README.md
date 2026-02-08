@@ -45,7 +45,7 @@ A comprehensive health and wellness application integrating ML, real-time collab
 ## Prerequisites
 
 * Node.js (v16 or higher)
-* Python (v3.9 or higher)
+* Python (v3.9 - v3.12)
 * A Supabase project with Realtime enabled.
 * An ElevenLabs API Key.
 
