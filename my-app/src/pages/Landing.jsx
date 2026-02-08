@@ -30,6 +30,9 @@ const Landing = ({ session }) => {
   const [profilePoints, setProfilePoints] = useState(0);
   const [profileLoading, setProfileLoading] = useState(false);
 
+  // ✅ NEW: Octopus count (placeholder for now)
+  const profileOctopusCount = 0;
+
   const fallbackUsername =
     session?.user?.user_metadata?.username ||
     session?.user?.email?.split('@')[0] ||
@@ -305,6 +308,31 @@ const Landing = ({ session }) => {
     marginBottom: 10,
   };
 
+  // ✅ NEW: Left header row to align "Profile" with octo badge
+  const profileHeaderLeftStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+  };
+
+  // ✅ NEW: Octo badge style
+  const octoBadgeStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '6px 10px',
+    borderRadius: 999,
+    background: 'rgba(255,255,255,0.10)',
+    border: '1px solid rgba(255,255,255,0.12)',
+  };
+
+  const octoIconStyle = {
+    width: 18,
+    height: 18,
+    objectFit: 'contain',
+    filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.45))',
+  };
+
   const closeBtnStyle = {
     border: 'none',
     background: 'rgba(255,255,255,0.12)',
@@ -369,7 +397,16 @@ const Landing = ({ session }) => {
             aria-label="Profile popup"
           >
             <div style={profilePopupHeaderStyle}>
-              <div style={{ fontWeight: 800 }}>Profile</div>
+              {/* ✅ CHANGED: left side now has Profile + octo count aligned */}
+              <div style={profileHeaderLeftStyle}>
+                <div style={{ fontWeight: 800 }}>Profile</div>
+
+                <div style={octoBadgeStyle} title="Octopus count (placeholder)">
+                  <img src={octo} alt="Octopus" style={octoIconStyle} />
+                  <span style={{ fontWeight: 800 }}>{profileOctopusCount}</span>
+                </div>
+              </div>
+
               <button style={closeBtnStyle} onClick={closeProfile}>
                 ✕
               </button>
