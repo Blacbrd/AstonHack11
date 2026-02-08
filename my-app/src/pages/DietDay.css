@@ -1,0 +1,191 @@
+.dietDayPage {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  color: white;
+}
+
+/* Background */
+.dietDayBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(900px 500px at 20% 10%, rgba(56, 189, 248, 0.18), transparent 60%),
+    radial-gradient(700px 500px at 80% 30%, rgba(34, 197, 94, 0.10), transparent 55%),
+    linear-gradient(180deg, #06111c 0%, #041a2a 35%, #022236 70%, #011827 100%);
+}
+
+/* Rays */
+.dietDayRays {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.35;
+  background: repeating-linear-gradient(
+    105deg,
+    rgba(255,255,255,0.08) 0px,
+    rgba(255,255,255,0.02) 60px,
+    transparent 140px
+  );
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+}
+
+/* Bubbles + Seaweed layers */
+.dietDayBubbles,
+.dietDaySeaweed {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Foreground always on top */
+.dietDayContent {
+  position: relative;
+  z-index: 2;
+}
+
+.dietDayLoading {
+  padding: 40px;
+  color: rgba(255,255,255,0.85);
+}
+
+.dietDayWrap {
+  padding: 40px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Back button */
+.dietDayBackBtn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+}
+
+/* Title / Date */
+.dietDayTitle {
+  margin-top: 24px;
+  margin-bottom: 0;
+}
+
+.dietDayDate {
+  margin-top: 6px;
+  color: rgba(255,255,255,0.65);
+}
+
+/* Meal grid */
+.dietDayGrid {
+  margin-top: 24px;
+  display: grid;
+  gap: 18px;
+}
+
+/* Meal box */
+.mealBox {
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+}
+
+.mealTitle {
+  margin: 0 0 10px 0;
+  font-size: 1.2rem;
+  color: rgba(255,255,255,0.92);
+}
+
+.mealTextarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  color: white;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.25);
+  outline: none;
+  resize: vertical;
+}
+
+.mealTextarea::placeholder {
+  color: rgba(255,255,255,0.45);
+}
+
+/* ===== Bubble animations ===== */
+@keyframes dietDayFloatUpA {
+  0% { transform: translateY(120%); opacity: 0; }
+  10% { opacity: 0.30; }
+  100% { transform: translateY(-150%); opacity: 0; }
+}
+
+@keyframes dietDayFloatUpB {
+  0% { transform: translateY(130%); opacity: 0; }
+  10% { opacity: 0.26; }
+  100% { transform: translateY(-160%); opacity: 0; }
+}
+
+/* IMPORTANT: makes SVG transform-origin behave */
+.dietDayBubble {
+  transform-box: fill-box;
+  transform-origin: calc(var(--bx) * 1px) 100px;
+}
+
+.dietDaySpeedA { animation: dietDayFloatUpA 16s linear infinite; }
+.dietDaySpeedB { animation: dietDayFloatUpB 21s linear infinite; }
+
+.dietDayDelay1 { animation-delay: 0s; }
+.dietDayDelay2 { animation-delay: 3.5s; }
+.dietDayDelay3 { animation-delay: 7s; }
+.dietDayDelay4 { animation-delay: 10.5s; }
+.dietDayDelay5 { animation-delay: 14s; }
+
+.dietDayBubbleOuter {
+  fill: rgba(255,255,255,0.06);
+  stroke-width: 0.25;
+}
+
+.dietDayBubbleHighlight {
+  fill: rgba(255,255,255,0.35);
+}
+
+/* ===== Seaweed sway ===== */
+@keyframes dietDaySeaweedSway {
+  0%   { transform: translateX(0px); }
+  50%  { transform: translateX(6px); }
+  100% { transform: translateX(0px); }
+}
+
+.dietDaySeaweedSway {
+  transform-box: fill-box;
+  transform-origin: 50px 100px;
+  animation: dietDaySeaweedSway 4.6s ease-in-out infinite;
+}
+
+.dietDaySeaweedD1 { animation-delay: 0.8s; }
+.dietDaySeaweedD2 { animation-delay: 2.2s; }
+
+.dietDaySeaweedThick {
+  fill: none;
+  stroke: rgba(34,197,94,0.40);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.dietDaySeaweedThin {
+  fill: none;
+  stroke: rgba(34,197,94,0.28);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}

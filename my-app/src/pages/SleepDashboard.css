@@ -1,0 +1,269 @@
+/* src/pages/SleepDashboard.css */
+
+.sleepPage {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  color: white;
+}
+
+/* Ocean background */
+.sleepBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(900px 500px at 20% 10%, rgba(56, 189, 248, 0.18), transparent 60%),
+    radial-gradient(700px 500px at 80% 30%, rgba(34, 197, 94, 0.10), transparent 55%),
+    linear-gradient(180deg, #06111c 0%, #041a2a 35%, #022236 70%, #011827 100%);
+}
+
+/* Light rays */
+.sleepRays {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.35;
+  background: repeating-linear-gradient(
+    105deg,
+    rgba(255,255,255,0.08) 0px,
+    rgba(255,255,255,0.02) 60px,
+    transparent 140px
+  );
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+}
+
+/* Layers */
+.sleepBubbles,
+.sleepSeaweed {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.sleepContent {
+  position: relative;
+  z-index: 2;
+}
+
+/* Cards sizing */
+.sleepCard {
+  max-width: 860px;
+}
+
+.sleepCardSm {
+  max-width: 560px;
+}
+
+/* Graph */
+.sleepGraph {
+  max-width: 100%;
+}
+
+.sleepAxis {
+  stroke: white;
+  opacity: 0.45;
+}
+
+.sleepGrid {
+  stroke: white;
+  opacity: 0.08;
+}
+
+.sleepYLabel {
+  fill: white;
+  opacity: 0.7;
+  font-size: 12px;
+}
+
+.sleepPointGood {
+  fill: var(--green);
+  opacity: 0.95;
+}
+
+.sleepPointBad {
+  fill: var(--red);
+  opacity: 0.95;
+}
+
+.sleepHint {
+  margin: 10px 0 0;
+}
+
+.sleepHint2 {
+  margin-top: 10px;
+}
+
+/* Weekly averages table */
+.sleepH2 {
+  margin-top: 0;
+}
+
+.sleepTableHead {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  font-weight: 700;
+  opacity: 0.85;
+  margin-top: 10px;
+}
+
+.sleepRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin-top: 12px;
+}
+
+.sleepRight {
+  text-align: right;
+}
+
+.sleepMuted {
+  color: var(--muted);
+}
+
+/* Bedtime helper */
+.sleepLabel {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+
+.sleepSelect {
+  padding: 10px;
+  font-size: 16px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+}
+
+.sleepBedList {
+  margin-top: 14px;
+}
+
+.sleepBedRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.sleepBedTime {
+  font-weight: 800;
+}
+
+/* ===== Bubbles ===== */
+/* ===== BUBBLES (fade-in mid, fade-out near top, very high, smooth) ===== */
+
+.sleepBubble {
+  transform-box: fill-box;
+  transform-origin: calc(var(--bx) * 1px) 100px;
+}
+
+/* Gentle + very high */
+@keyframes sleepRiseUltraA {
+  0%   { transform: translateY(135%); opacity: 0; }
+  30%  { opacity: 0; }
+  48%  { opacity: 0.26; }      /* fade IN mid */
+  76%  { opacity: 0.26; }
+  92%  { opacity: 0.10; }      /* fade OUT near top */
+  100% { transform: translateY(-1150%); opacity: 0; }
+}
+
+/* Slight drift */
+@keyframes sleepRiseUltraB {
+  0%   { transform: translate(0px, 140%); opacity: 0; }
+  32%  { opacity: 0; }
+  50%  { opacity: 0.24; }
+  72%  { transform: translate(1px, -520%); opacity: 0.24; }
+  92%  { opacity: 0.08; }
+  100% { transform: translate(-1px, -1250%); opacity: 0; }
+}
+
+/* Highest + slowest */
+@keyframes sleepRiseUltraC {
+  0%   { transform: translate(0px, 145%); opacity: 0; }
+  35%  { opacity: 0; }
+  55%  { opacity: 0.22; }
+  80%  { opacity: 0.22; }
+  94%  { opacity: 0.06; }
+  100% { transform: translate(1px, -1350%); opacity: 0; }
+}
+
+.sleepBubbles .sleepBubble {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Calm but frequent */
+.sleepBubbles .sleepBubble:nth-child(3n + 1) {
+  animation-name: sleepRiseUltraA;
+  animation-duration: 6.6s;
+}
+
+.sleepBubbles .sleepBubble:nth-child(3n + 2) {
+  animation-name: sleepRiseUltraB;
+  animation-duration: 7.8s;
+}
+
+.sleepBubbles .sleepBubble:nth-child(3n + 3) {
+  animation-name: sleepRiseUltraC;
+  animation-duration: 9.2s;
+}
+
+/* Start immediately */
+.sleepDelay1 { animation-delay: -1.2s; }
+.sleepDelay2 { animation-delay: -2.8s; }
+.sleepDelay3 { animation-delay: -4.4s; }
+.sleepDelay4 { animation-delay: -6.0s; }
+.sleepDelay5 { animation-delay: -7.6s; }
+
+.sleepBubbleOuter {
+  fill: rgba(255,255,255,0.06);
+  stroke-width: 0.25;
+}
+
+.sleepBubbleHighlight {
+  fill: rgba(255,255,255,0.35);
+}
+
+/* ===== SEAWEED (calm, sleepy sway) ===== */
+
+@keyframes sleepSeaweedSway {
+  0%   { transform: translateX(0px) rotate(0deg); }
+  50%  { transform: translateX(4px) rotate(0.6deg); }
+  100% { transform: translateX(0px) rotate(0deg); }
+}
+
+.sleepSeaweedSway {
+  transform-box: fill-box;
+  transform-origin: 50px 100px;
+  animation: sleepSeaweedSway 7.6s ease-in-out infinite;
+}
+
+.sleepSeaweedD1 { animation-delay: 0.6s; }
+.sleepSeaweedD2 { animation-delay: 2.1s; }
+
+.sleepSeaweedThick {
+  fill: none;
+  stroke: rgba(34,197,94,0.40);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.sleepSeaweedThin {
+  fill: none;
+  stroke: rgba(34,197,94,0.28);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}

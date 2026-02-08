@@ -1,0 +1,246 @@
+/* src/pages/DietCalendar.css */
+
+.dietPage {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  color: white;
+}
+
+/* Background gradient */
+.dietBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(900px 500px at 20% 10%, rgba(56, 189, 248, 0.18), transparent 60%),
+    radial-gradient(700px 500px at 80% 30%, rgba(34, 197, 94, 0.10), transparent 55%),
+    linear-gradient(180deg, #06111c 0%, #041a2a 35%, #022236 70%, #011827 100%);
+}
+
+/* Light rays overlay */
+.dietRays {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.35;
+  background: repeating-linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 0.08) 0px,
+    rgba(255, 255, 255, 0.02) 60px,
+    transparent 140px
+  );
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0));
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0));
+}
+
+/* Bubbles layer */
+.dietBubbles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+/* Seaweed layer */
+.dietSeaweed {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/* Foreground content */
+.dietContent {
+  position: relative;
+  z-index: 2;
+}
+
+/* Calendar card */
+.dietCard {
+  max-width: 720px;
+}
+
+/* Calendar grid */
+.dietGrid {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+/* Day of week headers */
+.dietDow {
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+/* Day button */
+.dietDayBtn {
+  height: 56px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  cursor: pointer;
+  opacity: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-weight: 700;
+}
+
+/* Today highlight */
+.dietDayBtn.isToday {
+  border: 2px solid var(--green);
+  background: rgba(34, 197, 94, 0.15);
+}
+
+/* Future disabled days */
+.dietDayBtn.isFuture {
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.35);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Log indicator dot */
+.dietDot {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+/* Hint text */
+.dietHint {
+  margin-top: 14px;
+}
+
+/* ===== BUBBLES (lower fade-in, EVEN higher travel, faster) ===== */
+
+/*
+  Diet goals:
+  - bubbles become visible slightly LOWER than Journal (fade-in earlier)
+  - but travel EVEN higher overall (up to -1250%)
+  - faster + more frequent
+*/
+
+.dietBubble {
+  transform-box: fill-box;
+  transform-origin: var(--bx) 100px;
+}
+
+/* High + smooth fade-in (lower) + smooth fade-out (near top) */
+@keyframes dietRiseUltraA {
+  0%   { transform: translateY(135%); opacity: 0; }
+  25%  { opacity: 0; }          /* invisible lower down */
+  42%  { opacity: 0.32; }       /* fade-in LOWER than journal */
+  72%  { opacity: 0.32; }
+  92%  { opacity: 0.10; }
+  100% { transform: translateY(-1050%); opacity: 0; } /* higher than journal */
+}
+
+/* Slight drift, higher */
+@keyframes dietRiseUltraB {
+  0%   { transform: translate(0px, 140%); opacity: 0; }
+  28%  { opacity: 0; }
+  45%  { opacity: 0.28; }
+  70%  { transform: translate(1px, -520%); opacity: 0.28; }
+  90%  { opacity: 0.10; }
+  100% { transform: translate(-1px, -1150%); opacity: 0; }
+}
+
+/* Very high, tiny drift (less “sway”) */
+@keyframes dietRiseUltraC {
+  0%   { transform: translate(0px, 145%); opacity: 0; }
+  30%  { opacity: 0; }
+  48%  { opacity: 0.26; }
+  76%  { opacity: 0.26; }
+  93%  { opacity: 0.08; }
+  100% { transform: translate(1px, -1250%); opacity: 0; } /* EVEN higher */
+}
+
+.dietBubbles .dietBubble {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* faster overall */
+.dietBubbles .dietBubble:nth-child(3n + 1) {
+  animation-name: dietRiseUltraA;
+  animation-duration: 5.2s;
+}
+
+.dietBubbles .dietBubble:nth-child(3n + 2) {
+  animation-name: dietRiseUltraB;
+  animation-duration: 6.2s;
+}
+
+.dietBubbles .dietBubble:nth-child(3n + 3) {
+  animation-name: dietRiseUltraC;
+  animation-duration: 7.4s;
+}
+
+/* start immediately (negative delays recommended) */
+.dietDelay1 { animation-delay: -0.6s; }
+.dietDelay2 { animation-delay: -1.8s; }
+.dietDelay3 { animation-delay: -3.0s; }
+.dietDelay4 { animation-delay: -4.2s; }
+.dietDelay5 { animation-delay: -5.4s; }
+
+.dietBubbleOuter {
+  fill: rgba(255, 255, 255, 0.06);
+  stroke-width: 0.25;
+}
+
+.dietBubbleHighlight {
+  fill: rgba(255, 255, 255, 0.35);
+}
+
+/* ===== SEAWEED (less sway) ===== */
+
+/*
+  Less sway than before:
+  - smaller amplitude (2.5px instead of 6px)
+  - slightly slower so it feels calmer
+*/
+
+@keyframes dietSeaweedSway {
+  0%   { transform: translateX(0px); }
+  50%  { transform: translateX(2.5px); }
+  100% { transform: translateX(0px); }
+}
+
+.dietSeaweedSway {
+  animation: dietSeaweedSway 6.8s ease-in-out infinite;
+  transform-origin: 50px 100px;
+}
+
+.dietSeaweedD1 { animation-delay: 0.4s; }
+.dietSeaweedD2 { animation-delay: 1.6s; }
+
+.dietSeaweedThick {
+  fill: none;
+  stroke: rgba(34, 197, 94, 0.40);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.dietSeaweedThin {
+  fill: none;
+  stroke: rgba(34, 197, 94, 0.28);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}

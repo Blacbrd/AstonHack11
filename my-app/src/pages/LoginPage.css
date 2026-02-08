@@ -1,0 +1,258 @@
+/* src/pages/LoginPage.css */
+
+.login-page {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  color: white;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+/* ===== Ocean background ===== */
+.login-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(900px 500px at 20% 10%, rgba(56, 189, 248, 0.18), transparent 60%),
+    radial-gradient(700px 500px at 80% 30%, rgba(34, 197, 94, 0.10), transparent 55%),
+    linear-gradient(180deg, #06111c 0%, #041a2a 35%, #022236 70%, #011827 100%);
+}
+
+/* ===== Light rays overlay ===== */
+.login-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.35;
+  background: repeating-linear-gradient(
+    105deg,
+    rgba(255,255,255,0.08) 0px,
+    rgba(255,255,255,0.02) 60px,
+    transparent 140px
+  );
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+}
+
+/* ===== Bubbles layer (CSS-only) ===== */
+.login-container::before {
+  content: "";
+  position: absolute;
+  inset: -120px -120px -120px -120px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 10% 120%, rgba(255,255,255,0.14) 0 2px, transparent 3px),
+    radial-gradient(circle at 18% 125%, rgba(255,255,255,0.10) 0 3px, transparent 4px),
+    radial-gradient(circle at 26% 130%, rgba(255,255,255,0.12) 0 2px, transparent 3px),
+    radial-gradient(circle at 36% 120%, rgba(255,255,255,0.10) 0 3px, transparent 4px),
+    radial-gradient(circle at 48% 140%, rgba(255,255,255,0.12) 0 2px, transparent 3px),
+    radial-gradient(circle at 60% 135%, rgba(255,255,255,0.10) 0 3px, transparent 4px),
+    radial-gradient(circle at 72% 145%, rgba(255,255,255,0.12) 0 2px, transparent 3px),
+    radial-gradient(circle at 84% 130%, rgba(255,255,255,0.10) 0 3px, transparent 4px),
+    radial-gradient(circle at 92% 125%, rgba(255,255,255,0.12) 0 2px, transparent 3px);
+  opacity: 0.55;
+  filter: blur(0.2px);
+  animation: loginBubbles 7.5s linear infinite;
+}
+
+@keyframes loginBubbles {
+  0%   { transform: translateY(0%); opacity: 0.0; }
+  20%  { opacity: 0.55; }
+  55%  { opacity: 0.65; }   /* fade in around middle */
+  85%  { opacity: 0.20; }   /* fade out near top */
+  100% { transform: translateY(-120%); opacity: 0; }
+}
+
+/* ===== Seaweed layer (subtle, calm) ===== */
+.login-page .login-seaweed {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+@keyframes loginSeaweedSway {
+  0%   { transform: translateX(0px) rotate(0deg); }
+  50%  { transform: translateX(3px) rotate(0.4deg); }
+  100% { transform: translateX(0px) rotate(0deg); }
+}
+
+.login-seaweed svg {
+  width: 100%;
+  height: 100%;
+}
+
+.login-seaweed .sway {
+  transform-origin: 50px 100px;
+  animation: loginSeaweedSway 7.8s ease-in-out infinite;
+}
+
+.login-seaweed .thick {
+  fill: none;
+  stroke: rgba(34,197,94,0.40);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+.login-seaweed .thin {
+  fill: none;
+  stroke: rgba(34,197,94,0.28);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+/* ===== Main “glass” card ===== */
+.login-container {
+  position: relative;
+  z-index: 2;
+  width: min(560px, 92vw);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  backdrop-filter: blur(12px);
+  padding: 22px;
+}
+
+/* Header */
+.login-header h2 {
+  margin: 0;
+  font-size: 34px;
+  letter-spacing: -0.02em;
+}
+.login-subtitle {
+  margin: 10px 0 0;
+  opacity: 0.72;
+  line-height: 1.45;
+}
+
+/* Error */
+.error-message {
+  margin-top: 14px;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(239,68,68,0.35);
+  background: rgba(239,68,68,0.12);
+  color: rgba(255,255,255,0.92);
+}
+
+/* Form */
+.login-form {
+  margin-top: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.form-group label {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-weight: 700;
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+
+.required {
+  color: rgba(34,197,94,0.95);
+  font-weight: 900;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.25);
+  color: white;
+  outline: none;
+  font-size: 15px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.form-input::placeholder {
+  color: rgba(255,255,255,0.45);
+}
+
+.form-input:focus {
+  border-color: rgba(34,197,94,0.75);
+  box-shadow: 0 0 0 4px rgba(34,197,94,0.12);
+}
+
+/* Optional stats section */
+.optional-stats-section {
+  margin-top: 6px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+}
+
+.info-note small {
+  color: rgba(255,255,255,0.70);
+  line-height: 1.35;
+}
+
+.stats-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Primary button */
+.btn-primary {
+  margin-top: 4px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 2px solid rgba(34,197,94,0.9);
+  background: rgba(34,197,94,0.10);
+  color: white;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px);
+}
+
+.btn-primary:hover {
+  background: rgba(34,197,94,0.16);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Switch link */
+.login-switch {
+  margin-top: 14px;
+  opacity: 0.85;
+}
+
+.btn-link {
+  margin-left: 8px;
+  border: 0;
+  background: transparent;
+  color: rgba(34,197,94,0.95);
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* === Tiny helper: removes default weird spacing === */
+p, h2 {
+  text-rendering: optimizeLegibility;
+}

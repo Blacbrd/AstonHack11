@@ -1,7 +1,9 @@
+// src/pages/DietCalendar.jsx
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient' // Make sure path is correct
+import { supabase } from '../lib/supabaseClient'
 import PageShell from '../components/PageShell'
+import './DietCalendar.css'
 
 function pad2(n) {
   return String(n).padStart(2, '0')
@@ -13,7 +15,7 @@ function toDateKey(dateObj) {
 
 export default function DietCalendar() {
   const navigate = useNavigate()
-  const [loggedDates, setLoggedDates] = useState({}) // Stores date keys that have data
+  const [loggedDates, setLoggedDates] = useState({})
 
   useEffect(() => {
     fetchDietLogs()
@@ -21,10 +23,11 @@ export default function DietCalendar() {
 
   const fetchDietLogs = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user }
+      } = await supabase.auth.getUser()
       if (!user) return
 
-      // Fetch only the dates that have at least one meal filled
       const { data, error } = await supabase
         .from('diet_logs')
         .select('date, breakfast, lunch, dinner')
@@ -32,9 +35,8 @@ export default function DietCalendar() {
 
       if (error) throw error
 
-      // Transform array into an object for fast lookup: { '2026-02-07': true }
       const logsMap = {}
-      data.forEach(log => {
+      data.forEach((log) => {
         if (log.breakfast || log.lunch || log.dinner) {
           logsMap[log.date] = true
         }
@@ -62,91 +64,133 @@ export default function DietCalendar() {
     }
   }, [year, month])
 
+  // Same vibe as journaling: many bubbles, varied sizes/speeds/delays
+  const bubbles = [
+    { x: 8, r: 0.9, speed: 'A', delay: '1' },
+    { x: 14, r: 1.3, speed: 'B', delay: '2' },
+    { x: 20, r: 1.0, speed: 'A', delay: '3' },
+    { x: 28, r: 1.7, speed: 'B', delay: '1' },
+    { x: 34, r: 1.1, speed: 'A', delay: '2' },
+    { x: 40, r: 0.8, speed: 'B', delay: '3' },
+    { x: 46, r: 1.5, speed: 'A', delay: '4' },
+    { x: 52, r: 2.0, speed: 'B', delay: '2' },
+    { x: 58, r: 1.2, speed: 'A', delay: '5' },
+    { x: 64, r: 1.6, speed: 'B', delay: '4' },
+    { x: 70, r: 1.0, speed: 'A', delay: '1' },
+    { x: 76, r: 2.2, speed: 'B', delay: '5' },
+    { x: 82, r: 1.3, speed: 'A', delay: '3' },
+    { x: 90, r: 1.0, speed: 'B', delay: '2' },
+    { x: 95, r: 0.85, speed: 'A', delay: '4' }
+  ]
+
   return (
-    <PageShell
-      title="Diet"
-      subtitle={`${monthName} ${year}`}
-      left={<button className="btn" onClick={() => navigate('/')}>← Back</button>}
-      right={null}
-    >
-      <div className="pageCard section" style={{ maxWidth: 720 }}>
-        <div
-          style={{
-            marginTop: 6,
-            display: 'grid',
-            gridTemplateColumns: 'repeat(7, 1fr)',
-            gap: 10
-          }}
+    <div className="dietPage">
+      <div className="dietBg" />
+      <div className="dietRays" />
+
+      {/* ===== Bubbles ===== */}
+      <svg className="dietBubbles" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="bubbleStrokeDiet" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.45)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.15)" />
+          </linearGradient>
+        </defs>
+
+        {bubbles.map((b, i) => (
+          <g
+            key={i}
+            className={`dietBubble dietSpeed${b.speed} dietDelay${b.delay}`}
+            style={{ '--bx': `${b.x}px` }}
+          >
+            <circle className="dietBubbleOuter" cx={b.x} cy="96" r={b.r} stroke="url(#bubbleStrokeDiet)" />
+            <circle
+              className="dietBubbleHighlight"
+              cx={b.x - 0.35}
+              cy="95.6"
+              r={Math.max(0.22, b.r * 0.28)}
+            />
+          </g>
+        ))}
+      </svg>
+
+      {/* ===== Seaweed ===== */}
+      <svg className="dietSeaweed" viewBox="0 0 100 100" preserveAspectRatio="none">
+        {/* Left seaweed */}
+        <g className="dietSeaweedSway dietSeaweedD1" opacity="0.9">
+          <path className="dietSeaweedThick" d="M8 100 C10 88, 6 78, 10 66 C14 54, 8 46, 12 36" />
+          <path className="dietSeaweedThin" d="M14 100 C16 90, 12 80, 16 70 C20 60, 15 50, 19 40" />
+        </g>
+
+        {/* Right seaweed */}
+        <g className="dietSeaweedSway dietSeaweedD2" opacity="0.9">
+          <path className="dietSeaweedThick" d="M92 100 C90 88, 94 78, 90 66 C86 54, 92 46, 88 36" />
+          <path className="dietSeaweedThin" d="M86 100 C84 90, 88 80, 84 70 C80 60, 85 50, 81 40" />
+        </g>
+      </svg>
+
+      {/* ===== Foreground content ===== */}
+      <div className="dietContent">
+        <PageShell
+          title="Diet"
+          subtitle={`${monthName} ${year}`}
+          left={
+            <button className="btn" onClick={() => navigate('/')}>
+              ← Back
+            </button>
+          }
+          right={null}
         >
-          {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d) => (
-            <div key={d} style={{ fontWeight: 700, opacity: 0.75 }}>
-              {d}
-            </div>
-          ))}
+          <div className="dietCard pageCard section">
+            <div className="dietGrid">
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+                <div key={d} className="dietDow">
+                  {d}
+                </div>
+              ))}
 
-          {Array.from({ length: firstDayOffset }).map((_, i) => (
-            <div key={`empty-${i}`} />
-          ))}
+              {Array.from({ length: firstDayOffset }).map((_, i) => (
+                <div key={`empty-${i}`} />
+              ))}
 
-          {Array.from({ length: days }).map((_, i) => {
-            const dayNum = i + 1
-            const dateObj = new Date(year, month, dayNum)
-            const key = toDateKey(dateObj)
+              {Array.from({ length: days }).map((_, i) => {
+                const dayNum = i + 1
+                const dateObj = new Date(year, month, dayNum)
+                const key = toDateKey(dateObj)
 
-            const isToday = key === todayKey
-            const isFuture = key > todayKey
-            const hasLog = Boolean(loggedDates[key])
+                const isToday = key === todayKey
+                const isFuture = key > todayKey
+                const hasLog = Boolean(loggedDates[key])
 
-            return (
-              <button
-                key={key}
-                onClick={() => {
-                  if (!isFuture) navigate(`/diet/${key}`)
-                }}
-                disabled={isFuture}
-                style={{
-                  height: 56,
-                  borderRadius: 14,
-                  border: isToday ? '2px solid var(--green)' : '1px solid var(--border)',
-                  background: isFuture
-                    ? 'rgba(255,255,255,0.03)'
-                    : isToday
-                    ? 'rgba(34,197,94,0.15)'
-                    : 'rgba(255,255,255,0.03)',
-                  color: isFuture ? 'rgba(255,255,255,0.35)' : 'var(--text)',
-                  cursor: isFuture ? 'not-allowed' : 'pointer',
-                  opacity: isFuture ? 0.55 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative',
-                  fontWeight: 700
-                }}
-              >
-                {dayNum}
+                const dayClass = [
+                  'dietDayBtn',
+                  isToday ? 'isToday' : '',
+                  isFuture ? 'isFuture' : '',
+                  hasLog && !isFuture ? 'hasLog' : ''
+                ]
+                  .filter(Boolean)
+                  .join(' ')
 
-                {hasLog && !isFuture && (
-                  <span
-                    style={{
-                      position: 'absolute',
-                      bottom: 8,
-                      right: 10,
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: 'var(--green)'
+                return (
+                  <button
+                    key={key}
+                    className={dayClass}
+                    onClick={() => {
+                      if (!isFuture) navigate(`/diet/${key}`)
                     }}
-                  />
-                )}
-              </button>
-            )
-          })}
-        </div>
+                    disabled={isFuture}
+                  >
+                    {dayNum}
+                    {hasLog && !isFuture && <span className="dietDot" />}
+                  </button>
+                )
+              })}
+            </div>
 
-        <p className="small" style={{ marginTop: 14 }}>
-          Click a past day to log meals. Future days are disabled.
-        </p>
+            <p className="dietHint small">Click a past day to log meals. Future days are disabled.</p>
+          </div>
+        </PageShell>
       </div>
-    </PageShell>
+    </div>
   )
 }
