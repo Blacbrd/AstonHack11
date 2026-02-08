@@ -85,6 +85,17 @@ const LoginPage = () => {
 
   return (
     <div className="login-page">
+      <div className="login-seaweed">
+  <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+    <g className="sway">
+      <path d="M8 100 C10 88, 6 78, 10 66 C14 54, 8 46, 12 36" className="thick" />
+      <path d="M14 100 C16 90, 12 80, 16 70 C20 60, 15 50, 19 40" className="thin" />
+      <path d="M90 100 C88 88, 92 78, 88 66 C84 54, 90 46, 86 36" className="thick" />
+      <path d="M84 100 C82 90, 86 80, 82 70 C78 60, 83 50, 79 40" className="thin" />
+    </g>
+  </svg>
+</div>
+
       <div className="login-container">
         
         {/* Header / Logo Section */}

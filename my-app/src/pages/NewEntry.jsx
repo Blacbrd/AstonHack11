@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import './NewEntry.css'
 
 export default function NewEntry({ mode }) {
   const navigate = useNavigate()
-  const { id } = useParams() // Get the ID from the URL if we are editing
-  
+  const { id } = useParams()
+
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(mode === 'edit')
 
-  // If in "edit" mode, fetch the existing data from Supabase first
   useEffect(() => {
     if (mode === 'edit' && id) {
       const fetchEntry = async () => {
@@ -20,12 +20,12 @@ export default function NewEntry({ mode }) {
             .select('*')
             .eq('journal_id', id)
             .single()
-          
+
           if (error) throw error
-          
+
           if (data) {
-            setTitle(data.title)
-            setContent(data.content)
+            setTitle(data.title || '')
+            setContent(data.content || '')
           }
         } catch (error) {
           console.error('Error fetching entry:', error.message)
@@ -38,24 +38,23 @@ export default function NewEntry({ mode }) {
   }, [mode, id])
 
   const saveAndGoBack = async () => {
-    // Validation: Don't save empty entries (Title OR Content is required)
-    // Adjust logic: if BOTH are empty, just return. If one has text, save it.
     if (!title.trim() && !content.trim()) {
       navigate('/journal')
       return
     }
 
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user }
+      } = await supabase.auth.getUser()
+
       if (!user) {
-        console.error("No user logged in")
+        console.error('No user logged in')
         navigate('/login')
         return
       }
 
       if (mode === 'new') {
-        // INSERT new row
         const { error } = await supabase.from('journals').insert([
           {
             user_id: user.id,
@@ -65,93 +64,132 @@ export default function NewEntry({ mode }) {
         ])
         if (error) throw error
       } else {
-        // UPDATE existing row
         const { error } = await supabase
           .from('journals')
-          .update({ 
-            title: title.trim(), 
-            content: content.trim() 
+          .update({
+            title: title.trim(),
+            content: content.trim()
           })
           .eq('journal_id', id)
-          .eq('user_id', user.id) // Extra safety check
+          .eq('user_id', user.id)
 
         if (error) throw error
       }
     } catch (error) {
       console.error('Error saving journal:', error.message)
-      // Optionally show an alert here if save fails
     }
 
-    // Always navigate back to the list
     navigate('/journal')
   }
 
+  // More bubbles, staggered with NEGATIVE delays so animation is already “in progress” at load.
+  const bubbles = [
+    { x: 6, r: 0.85, speed: 'A', delayClass: 'n1' },
+    { x: 10, r: 1.10, speed: 'B', delayClass: 'n2' },
+    { x: 14, r: 0.75, speed: 'A', delayClass: 'n3' },
+    { x: 18, r: 1.60, speed: 'B', delayClass: 'n4' },
+    { x: 22, r: 0.95, speed: 'A', delayClass: 'n5' },
+    { x: 27, r: 1.90, speed: 'B', delayClass: 'n6' },
+    { x: 31, r: 1.05, speed: 'A', delayClass: 'n7' },
+    { x: 36, r: 2.10, speed: 'B', delayClass: 'n8' },
+    { x: 41, r: 1.25, speed: 'A', delayClass: 'n9' },
+    { x: 46, r: 1.70, speed: 'B', delayClass: 'n10' },
+    { x: 52, r: 0.90, speed: 'A', delayClass: 'n11' },
+    { x: 57, r: 2.30, speed: 'B', delayClass: 'n12' },
+    { x: 62, r: 1.15, speed: 'A', delayClass: 'n13' },
+    { x: 68, r: 1.85, speed: 'B', delayClass: 'n14' },
+    { x: 74, r: 1.05, speed: 'A', delayClass: 'n15' },
+    { x: 80, r: 2.05, speed: 'B', delayClass: 'n16' },
+    { x: 86, r: 1.10, speed: 'A', delayClass: 'n17' },
+    { x: 92, r: 2.20, speed: 'B', delayClass: 'n18' }
+  ]
+
   if (loading) {
     return (
-      <div style={{ padding: '40px', color: '#fff', textAlign: 'center' }}>
-        Loading entry...
+      <div className="newEntryPage">
+        <div className="newEntryBg" />
+        <div className="newEntryRays" />
+        <div className="newEntryContent">
+          <div className="newEntryLoading">Loading entry...</div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div style={{ padding: '40px', maxWidth: '800px', margin: '0 auto' }}>
-      <button 
-        onClick={saveAndGoBack}
-        style={{
-          padding: '8px 16px',
-          backgroundColor: '#333',
-          color: 'white',
-          border: '1px solid #555',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          fontSize: '14px'
-        }}
-      >
-        ← Save & Back
-      </button>
+    <div className="newEntryPage">
+      <div className="newEntryBg" />
+      <div className="newEntryRays" />
 
-      <h2 style={{ marginTop: 24, marginBottom: 20, color: 'white' }}>
-        {mode === 'edit' ? 'Edit Entry' : 'New Journal Entry'}
-      </h2>
+      {/* Bubbles */}
+      <svg className="newEntryBubbles" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="bubbleStrokeNewEntry" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.45)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.15)" />
+          </linearGradient>
+        </defs>
 
-      <input
-        placeholder="Title..."
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        style={{
-          width: '100%',
-          padding: '12px',
-          marginTop: '10px',
-          fontSize: '18px',
-          fontWeight: 'bold',
-          backgroundColor: '#2a2a2a',
-          color: 'white',
-          border: '1px solid #444',
-          borderRadius: '8px',
-          outline: 'none'
-        }}
-      />
+        {bubbles.map((b, i) => (
+          <g
+            key={i}
+            className={`neBubble neSpeed${b.speed} neDelay${b.delayClass}`}
+            style={{ '--bx': `${b.x}` }}
+          >
+            <circle
+              className="neBubbleOuter"
+              cx={b.x}
+              cy="98"
+              r={b.r}
+              stroke="url(#bubbleStrokeNewEntry)"
+            />
+            <circle
+              className="neBubbleHighlight"
+              cx={b.x - 0.35}
+              cy="97.6"
+              r={Math.max(0.22, b.r * 0.28)}
+            />
+          </g>
+        ))}
+      </svg>
 
-      <textarea
-        placeholder="Write anything you want..."
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        rows={15}
-        style={{
-          width: '100%',
-          marginTop: '20px',
-          padding: '12px',
-          fontSize: '16px',
-          lineHeight: '1.6',
-          backgroundColor: '#2a2a2a',
-          color: 'white',
-          border: '1px solid #444',
-          borderRadius: '8px',
-          outline: 'none',
-          resize: 'vertical'
-        }}
-      />
+      {/* Seaweed */}
+      <svg className="newEntrySeaweed" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <g className="neSeaweedSway neSeaweedD1" opacity="0.9">
+          <path className="neSeaweedThick" d="M8 100 C10 88, 6 78, 10 66 C14 54, 8 46, 12 36" />
+          <path className="neSeaweedThin" d="M14 100 C16 90, 12 80, 16 70 C20 60, 15 50, 19 40" />
+        </g>
+
+        <g className="neSeaweedSway neSeaweedD2" opacity="0.9">
+          <path className="neSeaweedThick" d="M92 100 C90 88, 94 78, 90 66 C86 54, 92 46, 88 36" />
+          <path className="neSeaweedThin" d="M86 100 C84 90, 88 80, 84 70 C80 60, 85 50, 81 40" />
+        </g>
+      </svg>
+
+      <div className="newEntryContent">
+        <div className="newEntryWrap">
+          <button className="newEntryBackBtn" onClick={saveAndGoBack}>
+            ← Save &amp; Back
+          </button>
+
+          <h2 className="newEntryTitle">{mode === 'edit' ? 'Edit Entry' : 'New Journal Entry'}</h2>
+
+          <input
+            className="newEntryInput"
+            placeholder="Title..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+
+          <textarea
+            className="newEntryTextarea"
+            placeholder="Write anything you want..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            rows={15}
+          />
+        </div>
+      </div>
     </div>
   )
 }

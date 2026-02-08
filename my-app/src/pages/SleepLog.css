@@ -1,0 +1,179 @@
+.sleepLogPage {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  color: white;
+}
+
+/* Ocean background */
+.sleepLogBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(900px 500px at 20% 10%, rgba(56, 189, 248, 0.18), transparent 60%),
+    radial-gradient(700px 500px at 80% 30%, rgba(34, 197, 94, 0.10), transparent 55%),
+    linear-gradient(180deg, #06111c 0%, #041a2a 35%, #022236 70%, #011827 100%);
+}
+
+/* Light rays */
+.sleepLogRays {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.35;
+  background: repeating-linear-gradient(
+    105deg,
+    rgba(255,255,255,0.08) 0px,
+    rgba(255,255,255,0.02) 60px,
+    transparent 140px
+  );
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+}
+
+/* Effects layers */
+.sleepLogBubbles,
+.sleepLogSeaweed {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.sleepLogContent {
+  position: relative;
+  z-index: 2;
+}
+
+.sleepLogWrap {
+  padding: 40px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Back button */
+.sleepLogBackBtn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+}
+
+/* Title */
+.sleepLogTitle {
+  margin-top: 24px;
+  margin-bottom: 0;
+}
+
+/* Form */
+.sleepLogForm {
+  margin-top: 24px;
+}
+
+.sleepLogBlock {
+  margin-top: 24px;
+}
+
+.sleepLogLabel {
+  display: block;
+  margin-bottom: 8px;
+  color: rgba(255,255,255,0.75);
+}
+
+.sleepLogSelect {
+  padding: 12px;
+  font-size: 16px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  color: white;
+  outline: none;
+  backdrop-filter: blur(10px);
+}
+
+.sleepLogSelect option {
+  background: #0b1a26;
+  color: white;
+}
+
+.sleepLogHint {
+  margin-top: 20px;
+  opacity: 0.7;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.55);
+}
+
+/* ===== Bubbles ===== */
+@keyframes sleepLogFloatUpA {
+  0% { transform: translateY(120%); opacity: 0; }
+  10% { opacity: 0.30; }
+  100% { transform: translateY(-150%); opacity: 0; }
+}
+
+@keyframes sleepLogFloatUpB {
+  0% { transform: translateY(130%); opacity: 0; }
+  10% { opacity: 0.26; }
+  100% { transform: translateY(-160%); opacity: 0; }
+}
+
+.sleepLogBubble {
+  transform-box: fill-box;
+  transform-origin: calc(var(--bx) * 1px) 100px;
+}
+
+.sleepLogSpeedA { animation: sleepLogFloatUpA 16s linear infinite; }
+.sleepLogSpeedB { animation: sleepLogFloatUpB 21s linear infinite; }
+
+.sleepLogDelay1 { animation-delay: 0s; }
+.sleepLogDelay2 { animation-delay: 3.5s; }
+.sleepLogDelay3 { animation-delay: 7s; }
+.sleepLogDelay4 { animation-delay: 10.5s; }
+.sleepLogDelay5 { animation-delay: 14s; }
+
+.sleepLogBubbleOuter {
+  fill: rgba(255,255,255,0.06);
+  stroke-width: 0.25;
+}
+
+.sleepLogBubbleHighlight {
+  fill: rgba(255,255,255,0.35);
+}
+
+/* ===== Seaweed ===== */
+@keyframes sleepLogSeaweedSway {
+  0%   { transform: translateX(0px); }
+  50%  { transform: translateX(6px); }
+  100% { transform: translateX(0px); }
+}
+
+.sleepLogSeaweedSway {
+  transform-box: fill-box;
+  transform-origin: 50px 100px;
+  animation: sleepLogSeaweedSway 4.6s ease-in-out infinite;
+}
+
+.sleepLogSeaweedD1 { animation-delay: 0.8s; }
+.sleepLogSeaweedD2 { animation-delay: 2.2s; }
+
+.sleepLogSeaweedThick {
+  fill: none;
+  stroke: rgba(34,197,94,0.40);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.sleepLogSeaweedThin {
+  fill: none;
+  stroke: rgba(34,197,94,0.28);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}

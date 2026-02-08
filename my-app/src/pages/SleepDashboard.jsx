@@ -1,7 +1,9 @@
+// src/pages/SleepDashboard.jsx
 import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import PageShell from '../components/PageShell'
+import './SleepDashboard.css'
 
 function pad2(n) {
   return String(n).padStart(2, '0')
@@ -17,13 +19,14 @@ function clamp(v, a, b) {
 
 export default function SleepDashboard() {
   const navigate = useNavigate()
-  const [sleepLogs, setSleepLogs] = useState({}) // { '2026-02-07': { hours: 8 } }
+  const [sleepLogs, setSleepLogs] = useState({})
 
-  // Fetch data on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const {
+          data: { user }
+        } = await supabase.auth.getUser()
         if (!user) return
 
         const { data, error } = await supabase
@@ -33,9 +36,8 @@ export default function SleepDashboard() {
 
         if (error) throw error
 
-        // Convert array to object map for easy lookup in graph logic
         const logsMap = {}
-        data.forEach(log => {
+        data.forEach((log) => {
           logsMap[log.date] = { hours: log.hours_slept }
         })
         setSleepLogs(logsMap)
@@ -48,12 +50,10 @@ export default function SleepDashboard() {
 
   const today = new Date()
   const year = today.getFullYear()
-  const month = today.getMonth() // 0-11
+  const month = today.getMonth()
   const monthName = today.toLocaleString(undefined, { month: 'long' })
-
   const daysInMonth = new Date(year, month + 1, 0).getDate()
 
-  // ---------- Build points for this month ----------
   const points = useMemo(() => {
     const arr = []
     for (let d = 1; d <= daysInMonth; d++) {
@@ -65,7 +65,6 @@ export default function SleepDashboard() {
     return arr
   }, [sleepLogs, year, month, daysInMonth])
 
-  // ---------- Week averages table (Week 1–4) ----------
   const weekAverages = useMemo(() => {
     const ranges = [
       { label: 'Week 1', start: 1, end: 7 },
@@ -90,11 +89,9 @@ export default function SleepDashboard() {
     })
   }, [sleepLogs, year, month, daysInMonth])
 
-  // ---------- Bedtime calculator (Local Logic) ----------
   const [wakeTime, setWakeTime] = useState('07:00')
 
   const bedtimeOptions = useMemo(() => {
-    // cycles: 6,5,4,3 (9h,7.5h,6h,4.5h) + 15 mins to fall asleep
     const cycles = [6, 5, 4, 3]
     const [hh, mm] = wakeTime.split(':').map(Number)
 
@@ -113,7 +110,6 @@ export default function SleepDashboard() {
     })
   }, [wakeTime])
 
-  // ---------- Simple SVG graph ----------
   const width = 720
   const height = 260
   const pad = 40
@@ -128,154 +124,166 @@ export default function SleepDashboard() {
     return height - pad - t * (height - 2 * pad)
   }
 
+  // Underwater effects
+  const bubbles = [
+    { x: 7, r: 0.9, speed: 'A', delay: '1' },
+    { x: 13, r: 1.2, speed: 'B', delay: '2' },
+    { x: 20, r: 0.8, speed: 'A', delay: '3' },
+    { x: 28, r: 1.7, speed: 'B', delay: '1' },
+    { x: 36, r: 1.1, speed: 'A', delay: '2' },
+    { x: 44, r: 1.9, speed: 'B', delay: '4' },
+    { x: 52, r: 1.0, speed: 'A', delay: '5' },
+    { x: 60, r: 2.2, speed: 'B', delay: '2' },
+    { x: 68, r: 1.3, speed: 'A', delay: '4' },
+    { x: 76, r: 1.7, speed: 'B', delay: '3' },
+    { x: 84, r: 1.1, speed: 'A', delay: '1' },
+    { x: 92, r: 2.0, speed: 'B', delay: '5' }
+  ]
+
   return (
-    <PageShell
-      title="Sleep"
-      subtitle={`${monthName} ${year}`}
-      left={<button className="btn" onClick={() => navigate('/')}>← Back</button>}
-      right={<button className="iconBtn" onClick={() => navigate('/sleep/log')}>+</button>}
-    >
-      {/* Graph */}
-      <div className="pageCard section" style={{ maxWidth: 860 }}>
-        <svg width={width} height={height} style={{ maxWidth: '100%' }}>
-          {/* axes */}
-          <line x1={pad} y1={height - pad} x2={width - pad} y2={height - pad} stroke="white" opacity="0.45" />
-          <line x1={pad} y1={pad} x2={pad} y2={height - pad} stroke="white" opacity="0.45" />
+    <div className="sleepPage">
+      <div className="sleepBg" />
+      <div className="sleepRays" />
 
-          {/* y grid + labels */}
-          {[0, 3, 6, 9, 12].map((v) => (
-            <g key={v}>
-              <line
-                x1={pad}
-                x2={width - pad}
-                y1={yForHours(v)}
-                y2={yForHours(v)}
-                stroke="white"
-                opacity="0.08"
-              />
-              <text x={10} y={yForHours(v) + 4} fill="white" opacity="0.7" fontSize="12">
-                {v}
-              </text>
-            </g>
-          ))}
+      {/* Bubbles */}
+      <svg className="sleepBubbles" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="bubbleStrokeSleep" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.45)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.15)" />
+          </linearGradient>
+        </defs>
 
-          {/* points */}
-          {points.map((p) => {
-            const inGreen = p.hours > 6.5 && p.hours < 8.5
-            return (
-              <circle
-                key={p.day}
-                cx={xForDay(p.day)}
-                cy={yForHours(p.hours)}
-                r="5"
-                fill={inGreen ? 'var(--green)' : 'var(--red)'}
-                opacity="0.95"
-              />
-            )
-          })}
-        </svg>
-
-        <p className="small" style={{ margin: '10px 0 0' }}>
-          Green = 6.5–8.5 hours. Red = outside that range.
-        </p>
-      </div>
-
-      {/* Weekly averages table */}
-      <div className="pageCard section" style={{ maxWidth: 560 }}>
-        <h2 style={{ marginTop: 0 }}>Weekly average (this month)</h2>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr',
-            gap: 10,
-            fontWeight: 700,
-            opacity: 0.85,
-            marginTop: 10
-          }}
-        >
-          <div>Week</div>
-          <div style={{ textAlign: 'right' }}>Avg hours</div>
-          <div style={{ textAlign: 'right' }}>Days logged</div>
-        </div>
-
-        {weekAverages.map((w) => (
-          <div
-            key={w.label}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr 1fr',
-              gap: 10,
-              paddingTop: 12,
-              borderTop: '1px solid rgba(255,255,255,0.08)',
-              marginTop: 12
-            }}
+        {bubbles.map((b, i) => (
+          <g
+            key={i}
+            className={`sleepBubble sleepSpeed${b.speed} sleepDelay${b.delay}`}
+            style={{ '--bx': `${b.x}` }}
           >
-            <div>{w.label}</div>
-            <div style={{ textAlign: 'right' }}>
-              {w.avg === null ? '—' : w.avg.toFixed(1)}
-            </div>
-            <div style={{ textAlign: 'right', color: 'var(--muted)' }}>{w.count}</div>
-          </div>
+            <circle className="sleepBubbleOuter" cx={b.x} cy="96" r={b.r} stroke="url(#bubbleStrokeSleep)" />
+            <circle
+              className="sleepBubbleHighlight"
+              cx={b.x - 0.35}
+              cy="95.6"
+              r={Math.max(0.22, b.r * 0.28)}
+            />
+          </g>
         ))}
-      </div>
+      </svg>
 
-      {/* Bedtime helper */}
-      <div className="pageCard section" style={{ maxWidth: 560 }}>
-        <h2 style={{ marginTop: 0 }}>When should you fall asleep?</h2>
+      {/* Seaweed */}
+      <svg className="sleepSeaweed" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <g className="sleepSeaweedSway sleepSeaweedD1" opacity="0.9">
+          <path className="sleepSeaweedThick" d="M8 100 C10 88, 6 78, 10 66 C14 54, 8 46, 12 36" />
+          <path className="sleepSeaweedThin" d="M14 100 C16 90, 12 80, 16 70 C20 60, 15 50, 19 40" />
+        </g>
 
-        <label style={{ display: 'block', marginBottom: 8, color: 'var(--muted)' }}>
-          When do you want to wake up?
-        </label>
+        <g className="sleepSeaweedSway sleepSeaweedD2" opacity="0.9">
+          <path className="sleepSeaweedThick" d="M92 100 C90 88, 94 78, 90 66 C86 54, 92 46, 88 36" />
+          <path className="sleepSeaweedThin" d="M86 100 C84 90, 88 80, 84 70 C80 60, 85 50, 81 40" />
+        </g>
+      </svg>
 
-        <select
-          value={wakeTime}
-          onChange={(e) => setWakeTime(e.target.value)}
-          style={{
-            padding: 10,
-            fontSize: 16,
-            width: '100%',
-            borderRadius: 12,
-            border: '1px solid var(--border)',
-            background: 'rgba(255,255,255,0.05)',
-            color: 'var(--text)'
-          }}
+      <div className="sleepContent">
+        <PageShell
+          title="Sleep"
+          subtitle={`${monthName} ${year}`}
+          left={
+            <button className="btn" onClick={() => navigate('/')}>
+              ← Back
+            </button>
+          }
+          right={
+            <button className="iconBtn" onClick={() => navigate('/sleep/log')}>
+              +
+            </button>
+          }
         >
-          {Array.from({ length: 48 }).map((_, i) => {
-            const hh = pad2(Math.floor(i / 2))
-            const mm = i % 2 === 0 ? '00' : '30'
-            const t = `${hh}:${mm}`
-            return (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            )
-          })}
-        </select>
+          {/* Graph */}
+          <div className="sleepCard pageCard section">
+            <svg className="sleepGraph" width={width} height={height}>
+              <line x1={pad} y1={height - pad} x2={width - pad} y2={height - pad} className="sleepAxis" />
+              <line x1={pad} y1={pad} x2={pad} y2={height - pad} className="sleepAxis" />
 
-        <div style={{ marginTop: 14 }}>
-          {bedtimeOptions.map((b) => (
-            <div
-              key={b.cycles}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '12px 0',
-                borderBottom: '1px solid rgba(255,255,255,0.08)'
-              }}
-            >
-              <div style={{ color: 'var(--muted)' }}>
-                {b.sleepHours}h sleep ({b.cycles} cycles)
-              </div>
-              <div style={{ fontWeight: 800 }}>{b.time}</div>
+              {[0, 3, 6, 9, 12].map((v) => (
+                <g key={v}>
+                  <line x1={pad} x2={width - pad} y1={yForHours(v)} y2={yForHours(v)} className="sleepGrid" />
+                  <text x={10} y={yForHours(v) + 4} className="sleepYLabel">
+                    {v}
+                  </text>
+                </g>
+              ))}
+
+              {points.map((p) => {
+                const inGreen = p.hours > 6.5 && p.hours < 8.5
+                return (
+                  <circle
+                    key={p.day}
+                    cx={xForDay(p.day)}
+                    cy={yForHours(p.hours)}
+                    r="5"
+                    className={inGreen ? 'sleepPointGood' : 'sleepPointBad'}
+                  />
+                )
+              })}
+            </svg>
+
+            <p className="sleepHint small">Green = 6.5–8.5 hours. Red = outside that range.</p>
+          </div>
+
+          {/* Weekly averages */}
+          <div className="sleepCardSm pageCard section">
+            <h2 className="sleepH2">Weekly average (this month)</h2>
+
+            <div className="sleepTableHead">
+              <div>Week</div>
+              <div className="sleepRight">Avg hours</div>
+              <div className="sleepRight">Days logged</div>
             </div>
-          ))}
-        </div>
 
-        <p className="small" style={{ marginTop: 10 }}>
-          Assumes ~15 minutes to fall asleep.
-        </p>
+            {weekAverages.map((w) => (
+              <div key={w.label} className="sleepRow">
+                <div>{w.label}</div>
+                <div className="sleepRight">{w.avg === null ? '—' : w.avg.toFixed(1)}</div>
+                <div className="sleepRight sleepMuted">{w.count}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bedtime helper */}
+          <div className="sleepCardSm pageCard section">
+            <h2 className="sleepH2">When should you fall asleep?</h2>
+
+            <label className="sleepLabel">When do you want to wake up?</label>
+
+            <select className="sleepSelect" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)}>
+              {Array.from({ length: 48 }).map((_, i) => {
+                const hh = pad2(Math.floor(i / 2))
+                const mm = i % 2 === 0 ? '00' : '30'
+                const t = `${hh}:${mm}`
+                return (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                )
+              })}
+            </select>
+
+            <div className="sleepBedList">
+              {bedtimeOptions.map((b) => (
+                <div key={b.cycles} className="sleepBedRow">
+                  <div className="sleepMuted">
+                    {b.sleepHours}h sleep ({b.cycles} cycles)
+                  </div>
+                  <div className="sleepBedTime">{b.time}</div>
+                </div>
+              ))}
+            </div>
+
+            <p className="sleepHint2 small">Assumes ~15 minutes to fall asleep.</p>
+          </div>
+        </PageShell>
       </div>
-    </PageShell>
+    </div>
   )
 }

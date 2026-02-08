@@ -1,0 +1,196 @@
+/* src/pages/Journaling.css */
+
+.journalPage {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  color: white;
+}
+
+/* ================= BACKGROUND ================= */
+
+.journalBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(900px 500px at 20% 10%, rgba(56,189,248,0.18), transparent 60%),
+    radial-gradient(700px 500px at 80% 30%, rgba(34,197,94,0.10), transparent 55%),
+    linear-gradient(180deg, #06111c 0%, #041a2a 35%, #022236 70%, #011827 100%);
+}
+
+/* Light rays */
+.journalRays {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.35;
+  background: repeating-linear-gradient(
+    105deg,
+    rgba(255,255,255,0.08) 0px,
+    rgba(255,255,255,0.02) 60px,
+    transparent 140px
+  );
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+}
+
+/* ================= EFFECT LAYERS ================= */
+
+.journalBubbles,
+.journalSeaweed {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.journalContent {
+  position: relative;
+  z-index: 2;
+}
+
+/* ================= TEXT ================= */
+
+.journalLoading {
+  padding: 20px;
+  color: #9aa5b1;
+}
+
+.journalEmptyText {
+  margin: 0;
+  color: var(--muted);
+}
+
+.journalList {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+  max-width: 720px;
+}
+
+/* ================= BUBBLES ================= */
+
+/*
+  Bubbles now:
+  - rise WAY higher (−420% to −520%)
+  - fade smoothly near the top
+  - different speeds + subtle drift
+*/
+
+/* ================= BUBBLES ================= */
+
+/*
+  New behaviour:
+  - bubbles are mostly invisible at the bottom
+  - fade IN around the middle (so you "see" them higher up)
+  - fade OUT near the top
+  - travel MUCH higher (-900% to -1100%)
+  - faster overall
+*/
+
+.journalBubble {
+  transform-box: fill-box;
+  transform-origin: var(--bx) 100px;
+}
+
+/* Very high + fade in mid + fade out near top */
+@keyframes journalRiseUltraA {
+  0%   { transform: translateY(130%); opacity: 0; }
+  35%  { opacity: 0; }          /* still invisible lower down */
+  55%  { opacity: 0.34; }       /* fade in around mid */
+  78%  { opacity: 0.34; }       /* visible for a bit */
+  92%  { opacity: 0.10; }       /* start fading near top */
+  100% { transform: translateY(-900%); opacity: 0; }
+}
+
+/* Slight drift + even higher */
+@keyframes journalRiseUltraB {
+  0%   { transform: translate(0px, 135%); opacity: 0; }
+  38%  { opacity: 0; }
+  58%  { opacity: 0.30; }
+  74%  { transform: translate(2px, -380%); opacity: 0.30; }
+  90%  { opacity: 0.10; }
+  100% { transform: translate(-2px, -1050%); opacity: 0; }
+}
+
+/* Wiggle + highest */
+@keyframes journalRiseUltraC {
+  0%   { transform: translate(0px, 140%); opacity: 0; }
+  40%  { opacity: 0; }
+  60%  { opacity: 0.28; }
+  70%  { transform: translate(3px, -520%); opacity: 0.28; }
+  84%  { transform: translate(-3px, -720%); opacity: 0.28; }
+  93%  { opacity: 0.08; }
+  100% { transform: translate(2px, -1100%); opacity: 0; }
+}
+
+.journalBubbles .journalBubble {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* MUCH faster (more frequent) */
+.journalBubbles .journalBubble:nth-child(3n + 1) {
+  animation-name: journalRiseUltraA;
+  animation-duration: 4.8s;
+}
+
+.journalBubbles .journalBubble:nth-child(3n + 2) {
+  animation-name: journalRiseUltraB;
+  animation-duration: 5.6s;
+}
+
+.journalBubbles .journalBubble:nth-child(3n + 3) {
+  animation-name: journalRiseUltraC;
+  animation-duration: 6.6s;
+}
+
+/* Start immediately (recommended) */
+.journalDelay1 { animation-delay: -0.8s; }
+.journalDelay2 { animation-delay: -2.0s; }
+.journalDelay3 { animation-delay: -3.2s; }
+.journalDelay4 { animation-delay: -4.4s; }
+.journalDelay5 { animation-delay: -5.6s; }
+
+/* Bubble visuals */
+.journalBubbleOuter {
+  fill: rgba(255,255,255,0.06);
+  stroke-width: 0.25;
+}
+
+.journalBubbleHighlight {
+  fill: rgba(255,255,255,0.35);
+}
+
+/* ================= SEAWEED ================= */
+
+@keyframes seaweedSway {
+  0%   { transform: translateX(0px); }
+  50%  { transform: translateX(6px); }
+  100% { transform: translateX(0px); }
+}
+
+.seaweedSway {
+  animation: seaweedSway 4.6s ease-in-out infinite;
+  transform-origin: 50px 100px;
+}
+
+.seaweedD1 { animation-delay: 0.6s; }
+.seaweedD2 { animation-delay: 2.0s; }
+
+.seaweedThick {
+  fill: none;
+  stroke: rgba(34,197,94,0.40);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.seaweedThin {
+  fill: none;
+  stroke: rgba(34,197,94,0.28);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
