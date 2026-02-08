@@ -3,12 +3,12 @@ Here is a comprehensive `README.md` file for your project.
 ```markdown
 # 🐙Inklings🐙
 
-A comprehensive health and wellness application integrating AI, real-time collaboration, and tracking features. This platform allows users to track their diet, sleep, and mental health while utilizing AI for yoga form correction and guided meditation. It features a robust social system with real-time collaborative journaling.
+A comprehensive health and wellness application integrating ML, real-time collaboration, and tracking features. This platform allows users to track their diet, sleep, and mental health while utilizing ML for yoga form correction and guided meditation. It features a robust social system with real-time collaborative journaling.
 
 ## Features
 
 ### AI & Real-Time Interaction
-* **AI Yoga Instructor**: Uses computer vision (via WebSockets) to analyze yoga poses in real-time and provide feedback on form.
+* **ML Yoga Instructor**: Uses computer vision (via WebSockets) to analyze yoga poses in real-time and provide feedback on form.
 * **AI Meditation**: Generates custom guided meditation sessions using ElevenLabs Text-to-Speech integration. Includes caching strategies to optimize API usage.
 * **Co-op Journaling**: A Google Docs-style collaborative editor. Users can write in personal journals or create shared rooms with friends to write together in real-time.
 
