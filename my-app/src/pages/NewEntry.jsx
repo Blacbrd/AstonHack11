@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import './NewEntry.css'
+import { logTodayAndSave } from '../components/octopusProgress'
 
 // Helper for debouncing
 const debounce = (func, delay) => {
@@ -24,8 +25,8 @@ export default function NewEntry({ mode, isCoop = false }) {
   const [loading, setLoading] = useState(mode === 'edit' || isCoop)
   const [isSaving, setIsSaving] = useState(false)
   const [entryData, setEntryData] = useState(null)
-  
-  // Debug UI
+   
+  // Debug UI (From Main Branch)
   const [connectionStatus, setConnectionStatus] = useState('WAITING')
 
   // Refs
@@ -118,7 +119,7 @@ export default function NewEntry({ mode, isCoop = false }) {
            else if (status === 'TIMED_OUT') setConnectionStatus('RETRYING (RLS)')
            else setConnectionStatus(status)
         })
-      
+       
       channelRef.current = channel
     }
 
@@ -197,14 +198,23 @@ export default function NewEntry({ mode, isCoop = false }) {
         } catch (e) { /* ignore */ }
       }
     } else if (!isCoop) {
-      const payload = { title: title.trim(), content: content.trim() }
-      if (mode === 'new') {
-        await supabase.from('journals').insert([{ ...payload, user_id: currentUserId }])
-      } else {
-        await supabase.from('journals').update(payload).eq(idColumn, id)
+      // SOLO SAVE LOGIC
+      try {
+        const payload = { title: title.trim(), content: content.trim() }
+        if (mode === 'new') {
+          await supabase.from('journals').insert([{ ...payload, user_id: currentUserId }])
+        } else {
+          await supabase.from('journals').update(payload).eq(idColumn, id)
+        }
+
+        // ✅ Count journal as "done" for today (Octopus Progress)
+        logTodayAndSave('journal')
+      } catch (error) {
+        console.error('Error saving journal:', error.message)
       }
     }
 
+    // Navigation Logic
     if (isCoop && entryData && currentUserId) {
       const partnerId = entryData.user1_id === currentUserId 
         ? entryData.user2_id 

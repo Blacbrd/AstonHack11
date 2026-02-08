@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import Webcam from 'react-webcam'
+import { logTodayAndSave } from '../components/octopusProgress'
 import './PoseSession.css'
 
 const PoseSession = () => {
@@ -30,6 +31,9 @@ const PoseSession = () => {
   const lastSentRef = useRef(0)
   const lastBroadcastRef = useRef(0)
   const runningRef = useRef(true)
+  
+  // Progress Logic
+  const didLogRef = useRef(false)
 
   // Low res for speed over Supabase
   const videoConstraints = { width: 320, height: 240, facingMode: 'user' }
@@ -62,7 +66,7 @@ const PoseSession = () => {
     }
   }
 
-  // 2. SUPABASE BROADCAST (FIXED: Robust Cleanup & Reconnect)
+  // 2. SUPABASE BROADCAST (Robust Cleanup & Reconnect)
   useEffect(() => {
     if (!roomId || roomId === 'solo' || !session) return;
 
@@ -70,7 +74,7 @@ const PoseSession = () => {
     const channelName = `room:${roomId}`;
 
     const connectToRelay = async () => {
-      // 1. Force Cleanup of any existing channel on this Room ID
+      // Force Cleanup of any existing channel on this Room ID
       if (broadcastChannelRef.current) {
         await supabase.removeChannel(broadcastChannelRef.current);
         broadcastChannelRef.current = null;
@@ -82,7 +86,7 @@ const PoseSession = () => {
 
       const channel = supabase.channel(channelName, {
         config: {
-          broadcast: { self: false, ack: false } // ack: false makes it faster (fire and forget)
+          broadcast: { self: false, ack: false } // ack: false makes it faster
         }
       });
 
@@ -102,7 +106,7 @@ const PoseSession = () => {
       broadcastChannelRef.current = channel;
     };
 
-    // 2. Safety Timer: Wait 100ms before connecting to prevent race conditions
+    // Safety Timer: Wait 100ms before connecting to prevent race conditions
     const timer = setTimeout(() => {
       connectToRelay();
     }, 100);
@@ -194,7 +198,18 @@ const PoseSession = () => {
     return () => cancelAnimationFrame(rafId)
   }, [poseName])
 
-  const handleBack = () => {
+  // ✅ END SESSION HANDLER (Merged Logic)
+  // Handles navigation AND progress logging
+  const endSession = () => {
+    // 1. Log Progress
+    if (!didLogRef.current) {
+      logTodayAndSave('yoga')
+      didLogRef.current = true
+    }
+
+    // 2. Navigate Back
+    // If in coop, go back to lobby to keep room open (optional, usually "End" kills room in Yoga.jsx)
+    // But here we just return to the main Yoga page.
     if (searchParams.get('coop_user')) {
       navigate(`/yoga?coop_user=${searchParams.get('coop_user')}`)
     } else {
@@ -224,7 +239,7 @@ const PoseSession = () => {
 
       <div className="pose-session-foreground">
         <div className="pose-session-header">
-          <button className="pose-session-back-btn" onClick={handleBack}>← End Session</button>
+          <button className="pose-session-back-btn" onClick={endSession}>← End Session</button>
           
           <div style={{textAlign:'right'}}>
             <h2 className="pose-session-title">POSE: <span className="pose-session-mode">{poseName?.toUpperCase()}</span></h2>

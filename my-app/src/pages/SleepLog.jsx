@@ -1,6 +1,7 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { logTodayAndSave } from '../components/octopusProgress'
 import './SleepLog.css'
 
 function pad2(n) {
@@ -13,9 +14,12 @@ function toDateKey(d) {
 
 export default function SleepLog() {
   const navigate = useNavigate()
+  const didLogRef = useRef(false) // ✅ prevent double logging
 
   const today = new Date()
-  const [dateKey, setDateKey] = useState(toDateKey(today))
+  const todayKey = toDateKey(today)
+
+  const [dateKey, setDateKey] = useState(todayKey)
   const [hours, setHours] = useState('')
 
   const last30Days = useMemo(() => {
@@ -73,6 +77,12 @@ export default function SleepLog() {
         )
 
       if (error) throw error
+
+      // ✅ ONLY count as done if logging TODAY
+      if (dateKey === todayKey && !didLogRef.current) {
+        logTodayAndSave('sleep')
+        didLogRef.current = true
+      }
     } catch (err) {
       console.error('Error saving sleep log:', err.message)
     }
@@ -155,7 +165,11 @@ export default function SleepLog() {
 
           <div className="sleepLogForm">
             <label className="sleepLogLabel">Date</label>
-            <select className="sleepLogSelect" value={dateKey} onChange={(e) => setDateKey(e.target.value)}>
+            <select
+              className="sleepLogSelect"
+              value={dateKey}
+              onChange={(e) => setDateKey(e.target.value)}
+            >
               {last30Days.map((k) => (
                 <option key={k} value={k}>
                   {k}
@@ -165,7 +179,11 @@ export default function SleepLog() {
 
             <div className="sleepLogBlock">
               <label className="sleepLogLabel">How many hours of sleep did you get?</label>
-              <select className="sleepLogSelect" value={hours} onChange={(e) => setHours(e.target.value)}>
+              <select
+                className="sleepLogSelect"
+                value={hours}
+                onChange={(e) => setHours(e.target.value)}
+              >
                 <option value="">Select…</option>
                 {Array.from({ length: 13 }).map((_, i) => (
                   <option key={i} value={i}>
@@ -175,7 +193,9 @@ export default function SleepLog() {
               </select>
             </div>
 
-            <p className="sleepLogHint">Select a date and hours to save your sleep data.</p>
+            <p className="sleepLogHint">
+              Select a date and hours to save your sleep data.
+            </p>
           </div>
         </div>
       </div>
