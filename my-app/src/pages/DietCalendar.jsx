@@ -1,5 +1,5 @@
 // src/pages/DietCalendar.jsx
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import PageShell from '../components/PageShell'
@@ -17,9 +17,34 @@ export default function DietCalendar() {
   const navigate = useNavigate()
   const [loggedDates, setLoggedDates] = useState({})
 
+  // Ask Gemini modal state (chat)
+  const [askOpen, setAskOpen] = useState(false)
+  const [geminiText, setGeminiText] = useState('')
+  const [sending, setSending] = useState(false)
+  const [messages, setMessages] = useState([]) // { role: 'user'|'gemini', text: string }
+  const chatEndRef = useRef(null)
+
   useEffect(() => {
     fetchDietLogs()
   }, [])
+
+  // close modal on ESC
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setAskOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  // autoscroll chat
+  useEffect(() => {
+    if (askOpen) {
+      setTimeout(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }, 50)
+    }
+  }, [askOpen, messages])
 
   const fetchDietLogs = async () => {
     try {
@@ -47,6 +72,49 @@ export default function DietCalendar() {
     }
   }
 
+  // send to backend (diet chat)
+  const handleSendGemini = async () => {
+    const text = geminiText.trim()
+    if (!text || sending) return
+
+    const nextMessages = [...messages, { role: 'user', text }]
+    setMessages(nextMessages)
+    setGeminiText('')
+    setSending(true)
+
+    try {
+      const res = await fetch('http://localhost:5000/ask_gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'diet',
+          tone: 'calm',
+          max_words: 80,
+          messages: nextMessages
+        })
+      })
+
+      const data = await res.json().catch(async () => {
+        const raw = await res.text()
+        throw new Error(raw || 'Non-JSON response from backend')
+      })
+
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.error || `Request failed (${res.status})`)
+      }
+
+      setMessages((prev) => [...prev, { role: 'gemini', text: data.reply || '' }])
+    } catch (e) {
+      console.error('Ask Gemini error:', e)
+      setMessages((prev) => [
+        ...prev,
+        { role: 'gemini', text: `⚠️ Error: ${String(e?.message || e)}` }
+      ])
+    } finally {
+      setSending(false)
+    }
+  }
+
   const today = new Date()
   const todayKey = toDateKey(today)
 
@@ -64,7 +132,7 @@ export default function DietCalendar() {
     }
   }, [year, month])
 
-  // Same vibe as journaling: many bubbles, varied sizes/speeds/delays
+  // bubbles
   const bubbles = [
     { x: 8, r: 0.9, speed: 'A', delay: '1' },
     { x: 14, r: 1.3, speed: 'B', delay: '2' },
@@ -88,7 +156,7 @@ export default function DietCalendar() {
       <div className="dietBg" />
       <div className="dietRays" />
 
-      {/* ===== Bubbles ===== */}
+      {/* Bubbles */}
       <svg className="dietBubbles" viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
           <linearGradient id="bubbleStrokeDiet" x1="0" y1="0" x2="1" y2="1">
@@ -103,7 +171,13 @@ export default function DietCalendar() {
             className={`dietBubble dietSpeed${b.speed} dietDelay${b.delay}`}
             style={{ '--bx': `${b.x}px` }}
           >
-            <circle className="dietBubbleOuter" cx={b.x} cy="96" r={b.r} stroke="url(#bubbleStrokeDiet)" />
+            <circle
+              className="dietBubbleOuter"
+              cx={b.x}
+              cy="96"
+              r={b.r}
+              stroke="url(#bubbleStrokeDiet)"
+            />
             <circle
               className="dietBubbleHighlight"
               cx={b.x - 0.35}
@@ -114,22 +188,20 @@ export default function DietCalendar() {
         ))}
       </svg>
 
-      {/* ===== Seaweed ===== */}
+      {/* Seaweed */}
       <svg className="dietSeaweed" viewBox="0 0 100 100" preserveAspectRatio="none">
-        {/* Left seaweed */}
         <g className="dietSeaweedSway dietSeaweedD1" opacity="0.9">
           <path className="dietSeaweedThick" d="M8 100 C10 88, 6 78, 10 66 C14 54, 8 46, 12 36" />
           <path className="dietSeaweedThin" d="M14 100 C16 90, 12 80, 16 70 C20 60, 15 50, 19 40" />
         </g>
 
-        {/* Right seaweed */}
         <g className="dietSeaweedSway dietSeaweedD2" opacity="0.9">
           <path className="dietSeaweedThick" d="M92 100 C90 88, 94 78, 90 66 C86 54, 92 46, 88 36" />
           <path className="dietSeaweedThin" d="M86 100 C84 90, 88 80, 84 70 C80 60, 85 50, 81 40" />
         </g>
       </svg>
 
-      {/* ===== Foreground content ===== */}
+      {/* Foreground */}
       <div className="dietContent">
         <PageShell
           title="Diet"
@@ -139,7 +211,11 @@ export default function DietCalendar() {
               ← Back
             </button>
           }
-          right={null}
+          right={
+            <button className="btnSecondary" onClick={() => setAskOpen(true)}>
+              Ask Gemini
+            </button>
+          }
         >
           <div className="dietCard pageCard section">
             <div className="dietGrid">
@@ -187,10 +263,97 @@ export default function DietCalendar() {
               })}
             </div>
 
-            <p className="dietHint small">Click a past day to log meals. Future days are disabled.</p>
+            <p className="dietHint small">
+              Click a past day to log meals. Future days are disabled.
+            </p>
           </div>
         </PageShell>
       </div>
+
+      {/* ASK GEMINI MODAL */}
+      {askOpen && (
+        <div className="geminiModalOverlay" onClick={() => setAskOpen(false)}>
+          <div className="geminiModal" onClick={(e) => e.stopPropagation()}>
+            <div className="geminiModalHeader">
+              <div className="geminiModalTitle">Ask Gemini</div>
+              <button className="iconBtn" onClick={() => setAskOpen(false)}>✕</button>
+            </div>
+
+            {/* Chat window */}
+            <div
+              style={{
+                maxHeight: 280,
+                overflowY: 'auto',
+                padding: 10,
+                borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.18)',
+                background: 'rgba(255,255,255,0.06)',
+                marginBottom: 10,
+                whiteSpace: 'pre-wrap'
+              }}
+            >
+              {messages.length === 0 ? (
+                <div style={{ opacity: 0.75 }}>Ask something to start…</div>
+              ) : (
+                messages.map((m, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      marginBottom: 10,
+                      textAlign: m.role === 'user' ? 'right' : 'left'
+                    }}
+                  >
+                    <div style={{ fontWeight: 800, fontSize: 12, opacity: 0.8 }}>
+                      {m.role === 'user' ? 'You' : 'Gemini'}
+                    </div>
+                    <div
+                      style={{
+                        display: 'inline-block',
+                        padding: '10px 12px',
+                        borderRadius: 14,
+                        border: '1px solid rgba(255,255,255,0.18)',
+                        background: 'rgba(255,255,255,0.08)',
+                        maxWidth: '85%'
+                      }}
+                    >
+                      {m.text}
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            <textarea
+              className="geminiTextarea"
+              rows={4}
+              placeholder="Type your message…"
+              value={geminiText}
+              onChange={(e) => setGeminiText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSendGemini()
+                }
+              }}
+            />
+
+            <div className="geminiModalActions">
+              <button className="btnGhost" onClick={() => setMessages([])} disabled={sending}>
+                Clear chat
+              </button>
+
+              <button className="btnGhost" onClick={() => setAskOpen(false)}>
+                Close
+              </button>
+
+              <button className="btnPrimary" onClick={handleSendGemini} disabled={sending}>
+                {sending ? 'Sending…' : 'Send'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
