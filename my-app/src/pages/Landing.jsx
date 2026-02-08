@@ -5,12 +5,10 @@ import { supabase } from '../lib/supabaseClient';
 const Landing = ({ session }) => {
   const navigate = useNavigate();
 
-  // Extract username from metadata (fallback to email if username missing)
   const username = session?.user?.user_metadata?.username || session?.user?.email?.split('@')[0] || 'User';
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    // App.jsx listener will automatically redirect to /login
   };
 
   const containerStyle = {
@@ -22,7 +20,7 @@ const Landing = ({ session }) => {
     gap: '20px',
     backgroundColor: '#121212',
     color: 'white',
-    position: 'relative' // needed for absolute positioning of header
+    position: 'relative' 
   };
 
   const headerStyle = {
@@ -49,7 +47,6 @@ const Landing = ({ session }) => {
 
   return (
     <div style={containerStyle}>
-      {/* Top Right Header */}
       <div style={headerStyle}>
         <span style={{ color: '#aaa' }}>Logged in as:</span>
         <strong style={{ color: '#646cff', fontSize: '1.1rem' }}>{username}</strong>
@@ -72,6 +69,10 @@ const Landing = ({ session }) => {
       
       <button style={buttonStyle} onClick={() => navigate('/yoga')}>
         🧘 Yoga & AI Form
+      </button>
+
+      <button style={buttonStyle} onClick={() => navigate('/meditation')}>
+        🧠 Meditation (AI)
       </button>
 
       <button style={buttonStyle} onClick={() => navigate('/journal')}>
