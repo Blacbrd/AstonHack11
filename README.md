@@ -1,8 +1,6 @@
 # 🐙Inklings🐙
 
 # Check out our project on Devpost!
-* ## Devpost Link:
-
 * https://devpost.com/software/inklings
 
 ## Description
