@@ -13,7 +13,7 @@ export default function Journaling() {
   const [loading, setLoading] = useState(true)
   const [session, setSession] = useState(null)
 
-  // Co-op State
+  // --- Co-op State ---
   const [showCoopModal, setShowCoopModal] = useState(false)
   const [coopMode, setCoopMode] = useState(false) 
   const [partner, setPartner] = useState(null)
@@ -22,7 +22,16 @@ export default function Journaling() {
   // Ref to track if we are already subscribed to avoid double-subscriptions
   const activeChannelRef = useRef(null)
 
-  // 1. Initial Load & Auth
+  // --- Gemini/AI State ---
+  const [askOpen, setAskOpen] = useState(false)
+  const [geminiText, setGeminiText] = useState('')
+  const [sending, setSending] = useState(false)
+  const [messages, setMessages] = useState([]) 
+  const chatEndRef = useRef(null)
+
+  // =========================================
+  // 1. INITIAL LOAD & AUTH
+  // =========================================
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
@@ -35,14 +44,16 @@ export default function Journaling() {
     })
   }, [])
 
-  // 2. Auto-Rejoin Room via URL
-  // FIX: Added checks to prevent infinite loop
+  // =========================================
+  // 2. CO-OP LOGIC & REALTIME
+  // =========================================
+  
+  // Auto-Rejoin Room via URL
   useEffect(() => {
     if (!session) return
 
     const coopUserId = searchParams.get('coop_user')
     
-    // If we have a URL param, BUT we aren't in coop mode yet, or we are looking at the wrong partner
     if (coopUserId && (!coopMode || partner?.id !== coopUserId)) {
       const restoreSession = async () => {
         setLoading(true)
@@ -53,7 +64,6 @@ export default function Journaling() {
           .single()
         
         if (friendProfile) {
-          // Manually set state here instead of calling handleJoinRoom to avoid triggering searchParams update loop
           setPartner(friendProfile)
           setCoopMode(true)
           
@@ -68,7 +78,7 @@ export default function Journaling() {
     }
   }, [session, searchParams, coopMode, partner]) 
 
-  // --- 3. ROBUST REALTIME SUBSCRIPTION ---
+  // Robust Realtime Subscription
   useEffect(() => {
     if (!coopMode || !partner || !session) return
 
@@ -76,12 +86,10 @@ export default function Journaling() {
     const friendId = partner.id
     const channelId = `room:${[myId, friendId].sort().join('-')}`
 
-    // Avoid re-subscribing if we are already on this channel
     if (activeChannelRef.current && activeChannelRef.current.topic === `realtime:${channelId}`) {
       return
     }
 
-    // Clean up previous channel if it exists (e.g. switching rooms)
     if (activeChannelRef.current) {
       supabase.removeChannel(activeChannelRef.current)
     }
@@ -98,14 +106,12 @@ export default function Journaling() {
         }, 
         (payload) => {
           console.log("⚡ Realtime Update Received")
-          
           const rec = payload.new || payload.old
           const isOurRoom = 
             (rec.user1_id === myId && rec.user2_id === friendId) ||
             (rec.user1_id === friendId && rec.user2_id === myId)
           
           if (isOurRoom) {
-            // Fetch updates without triggering a full page loading state
             fetchCoopEntries(myId, friendId) 
           }
         }
@@ -118,20 +124,40 @@ export default function Journaling() {
 
     activeChannelRef.current = channel
 
-    // Cleanup function
     return () => {
-      // Only remove if we are actually unmounting or changing rooms
-      // We check if the refs have changed to prevent unnecessary disconnects
       if (activeChannelRef.current) {
         console.log(`🔌 Leaving Channel: ${channelId}`)
         supabase.removeChannel(activeChannelRef.current)
         activeChannelRef.current = null
       }
     }
-  // FIX: Depend on primitive IDs, not objects, to prevent re-renders on object reference changes
   }, [coopMode, partner?.id, session?.user?.id]) 
 
-  // --- FETCHING ---
+  // =========================================
+  // 3. GEMINI UI EFFECTS
+  // =========================================
+  
+  // Close modal on ESC
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setAskOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  // Auto-scroll chat
+  useEffect(() => {
+    if (askOpen) {
+      setTimeout(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }, 50)
+    }
+  }, [askOpen, messages])
+
+  // =========================================
+  // 4. FETCHING DATA
+  // =========================================
 
   const fetchPersonalJournals = async () => {
     setLoading(true)
@@ -160,23 +186,20 @@ export default function Journaling() {
     if (data) setCoopEntries(data)
   }
 
-  // --- ACTIONS ---
-  
+  // =========================================
+  // 5. ACTIONS
+  // =========================================
+
   const handleJoinRoom = async (friend) => {
     setShowCoopModal(false)
     setLoading(true)
-    
-    // Set URL (triggers the useEffect #2, but we added guards there)
     setSearchParams({ coop_user: friend.id })
-    
     setPartner(friend)
     setCoopMode(true)
 
     const myId = session.user.id
-    const friendId = friend.id
-
     try {
-      await fetchCoopEntries(myId, friendId)
+      await fetchCoopEntries(myId, friend.id)
     } catch (err) {
       console.error("Error joining room:", err)
     } finally {
@@ -209,20 +232,61 @@ export default function Journaling() {
   }
 
   const exitCoop = () => {
-    // Cleanup Subscription
     if (activeChannelRef.current) {
       supabase.removeChannel(activeChannelRef.current)
       activeChannelRef.current = null
     }
-    
     setCoopMode(false)
     setPartner(null)
     setSearchParams({}) 
     fetchPersonalJournals()
   }
 
+  const handleSendGemini = async () => {
+    const text = geminiText.trim()
+    if (!text || sending) return
+
+    const nextMessages = [...messages, { role: 'user', text }]
+    setMessages(nextMessages)
+    setGeminiText('')
+    setSending(true)
+
+    try {
+      const res = await fetch('http://localhost:5000/ask_gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'journal',
+          tone: 'calm',
+          max_words: 80,
+          messages: nextMessages
+        })
+      })
+
+      const data = await res.json().catch(async () => {
+        const raw = await res.text()
+        throw new Error(raw || 'Non-JSON response from backend')
+      })
+
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.error || `Request failed (${res.status})`)
+      }
+
+      setMessages((prev) => [...prev, { role: 'gemini', text: data.reply || '' }])
+    } catch (e) {
+      console.error('Ask Gemini error:', e)
+      setMessages((prev) => [
+        ...prev,
+        { role: 'gemini', text: `⚠️ Error: ${String(e?.message || e)}` }
+      ])
+    } finally {
+      setSending(false)
+    }
+  }
+
   const formatDate = (dateString) => new Date(dateString).toLocaleString()
 
+  // --- Visuals ---
   const bubbles = [
     { x: 8, r: 0.9, speed: 'A', delay: '1' },
     { x: 14, r: 1.3, speed: 'B', delay: '2' },
@@ -246,6 +310,7 @@ export default function Journaling() {
       <div className="journalBg" />
       <div className="journalRays" />
 
+      {/* Bubbles SVG */}
       <svg className="journalBubbles" viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
           <linearGradient id="bubbleStrokeJournal" x1="0" y1="0" x2="1" y2="1">
@@ -261,6 +326,7 @@ export default function Journaling() {
         ))}
       </svg>
 
+      {/* Seaweed SVG */}
       <svg className="journalSeaweed" viewBox="0 0 100 100" preserveAspectRatio="none">
         <g className="seaweedSway seaweedD1" opacity="0.9">
           <path className="seaweedThick" d="M8 100 C10 88, 6 78, 10 66 C14 54, 8 46, 12 36" />
@@ -288,11 +354,18 @@ export default function Journaling() {
           }
           right={
             <div style={{display:'flex', gap:10, alignItems:'center'}}>
+              {/* Only show "Ask Gemini" and "Co-op" buttons if NOT in co-op mode */}
               {!coopMode && (
-                <button className="btn" style={{background:'#646cff'}} onClick={() => setShowCoopModal(true)}>
-                  👥 Co-op
-                </button>
+                <>
+                  <button className="btnSecondary" style={{ marginRight: 5 }} onClick={() => setAskOpen(true)}>
+                    Ask Gemini
+                  </button>
+                  <button className="btn" style={{background:'#646cff'}} onClick={() => setShowCoopModal(true)}>
+                    👥 Co-op
+                  </button>
+                </>
               )}
+              
               <button 
                 className="iconBtn" 
                 onClick={() => coopMode ? createCoopEntry() : navigate('/journal/new')}
@@ -327,12 +400,89 @@ export default function Journaling() {
         </PageShell>
       </div>
 
+      {/* CO-OP MODAL */}
       {showCoopModal && session && (
         <CoopModal 
           session={session} 
           onClose={() => setShowCoopModal(false)}
           onJoinRoom={handleJoinRoom}
         />
+      )}
+
+      {/* ASK GEMINI MODAL */}
+      {askOpen && (
+        <div className="geminiModalOverlay" onClick={() => setAskOpen(false)}>
+          <div className="geminiModal" onClick={(e) => e.stopPropagation()}>
+            <div className="geminiModalHeader">
+              <div className="geminiModalTitle">Ask Gemini</div>
+              <button className="iconBtn" onClick={() => setAskOpen(false)}>✕</button>
+            </div>
+
+            {/* Chat window */}
+            <div style={{
+                maxHeight: 280,
+                overflowY: 'auto',
+                padding: 10,
+                borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.18)',
+                background: 'rgba(255,255,255,0.06)',
+                marginBottom: 10,
+                whiteSpace: 'pre-wrap'
+            }}>
+              {messages.length === 0 ? (
+                <div style={{ opacity: 0.75 }}>Ask something to start…</div>
+              ) : (
+                messages.map((m, i) => (
+                  <div key={i} style={{
+                      marginBottom: 10,
+                      textAlign: m.role === 'user' ? 'right' : 'left'
+                  }}>
+                    <div style={{ fontWeight: 800, fontSize: 12, opacity: 0.8 }}>
+                      {m.role === 'user' ? 'You' : 'Gemini'}
+                    </div>
+                    <div style={{
+                        display: 'inline-block',
+                        padding: '10px 12px',
+                        borderRadius: 14,
+                        border: '1px solid rgba(255,255,255,0.18)',
+                        background: 'rgba(255,255,255,0.08)',
+                        maxWidth: '85%'
+                    }}>
+                      {m.text}
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            <textarea
+              className="geminiTextarea"
+              rows={4}
+              placeholder="Type your message…"
+              value={geminiText}
+              onChange={(e) => setGeminiText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSendGemini()
+                }
+              }}
+            />
+
+            <div className="geminiModalActions">
+              <button className="btnGhost" onClick={() => setMessages([])} disabled={sending}>
+                Clear chat
+              </button>
+              <button className="btnGhost" onClick={() => setAskOpen(false)}>
+                Close
+              </button>
+              <button className="btnPrimary" onClick={handleSendGemini} disabled={sending}>
+                {sending ? 'Sending…' : 'Send'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

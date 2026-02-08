@@ -1,5 +1,4 @@
-// src/pages/SleepDashboard.jsx
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import PageShell from '../components/PageShell'
@@ -21,12 +20,17 @@ export default function SleepDashboard() {
   const navigate = useNavigate()
   const [sleepLogs, setSleepLogs] = useState({})
 
+  // Gemini State
+  const [askOpen, setAskOpen] = useState(false)
+  const [geminiText, setGeminiText] = useState('')
+  const [sending, setSending] = useState(false)
+  const [messages, setMessages] = useState([]) 
+  const chatEndRef = useRef(null)
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const {
-          data: { user }
-        } = await supabase.auth.getUser()
+        const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
         const { data, error } = await supabase
@@ -47,6 +51,67 @@ export default function SleepDashboard() {
     }
     fetchData()
   }, [])
+
+  // Close modal on ESC
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setAskOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  // Autoscroll chat
+  useEffect(() => {
+    if (askOpen) {
+      setTimeout(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }, 50)
+    }
+  }, [askOpen, messages])
+
+  // Handle Send Gemini
+  const handleSendGemini = async () => {
+    const text = geminiText.trim()
+    if (!text || sending) return
+
+    const nextMessages = [...messages, { role: 'user', text }]
+    setMessages(nextMessages)
+    setGeminiText('')
+    setSending(true)
+
+    try {
+      const res = await fetch('http://localhost:5000/ask_gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'sleep',
+          tone: 'calm',
+          max_words: 80,
+          messages: nextMessages
+        })
+      })
+
+      const data = await res.json().catch(async () => {
+        const raw = await res.text()
+        throw new Error(raw || 'Non-JSON response from backend')
+      })
+
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.error || `Request failed (${res.status})`)
+      }
+
+      setMessages((prev) => [...prev, { role: 'gemini', text: data.reply || '' }])
+    } catch (e) {
+      console.error('Ask Gemini error:', e)
+      setMessages((prev) => [
+        ...prev,
+        { role: 'gemini', text: `⚠️ Error: ${String(e?.message || e)}` }
+      ])
+    } finally {
+      setSending(false)
+    }
+  }
 
   const today = new Date()
   const year = today.getFullYear()
@@ -124,7 +189,6 @@ export default function SleepDashboard() {
     return height - pad - t * (height - 2 * pad)
   }
 
-  // Underwater effects
   const bubbles = [
     { x: 7, r: 0.9, speed: 'A', delay: '1' },
     { x: 13, r: 1.2, speed: 'B', delay: '2' },
@@ -153,20 +217,10 @@ export default function SleepDashboard() {
             <stop offset="100%" stopColor="rgba(255,255,255,0.15)" />
           </linearGradient>
         </defs>
-
         {bubbles.map((b, i) => (
-          <g
-            key={i}
-            className={`sleepBubble sleepSpeed${b.speed} sleepDelay${b.delay}`}
-            style={{ '--bx': `${b.x}` }}
-          >
+          <g key={i} className={`sleepBubble sleepSpeed${b.speed} sleepDelay${b.delay}`} style={{ '--bx': `${b.x}` }}>
             <circle className="sleepBubbleOuter" cx={b.x} cy="96" r={b.r} stroke="url(#bubbleStrokeSleep)" />
-            <circle
-              className="sleepBubbleHighlight"
-              cx={b.x - 0.35}
-              cy="95.6"
-              r={Math.max(0.22, b.r * 0.28)}
-            />
+            <circle className="sleepBubbleHighlight" cx={b.x - 0.35} cy="95.6" r={Math.max(0.22, b.r * 0.28)} />
           </g>
         ))}
       </svg>
@@ -177,7 +231,6 @@ export default function SleepDashboard() {
           <path className="sleepSeaweedThick" d="M8 100 C10 88, 6 78, 10 66 C14 54, 8 46, 12 36" />
           <path className="sleepSeaweedThin" d="M14 100 C16 90, 12 80, 16 70 C20 60, 15 50, 19 40" />
         </g>
-
         <g className="sleepSeaweedSway sleepSeaweedD2" opacity="0.9">
           <path className="sleepSeaweedThick" d="M92 100 C90 88, 94 78, 90 66 C86 54, 92 46, 88 36" />
           <path className="sleepSeaweedThin" d="M86 100 C84 90, 88 80, 84 70 C80 60, 85 50, 81 40" />
@@ -194,9 +247,14 @@ export default function SleepDashboard() {
             </button>
           }
           right={
-            <button className="iconBtn" onClick={() => navigate('/sleep/log')}>
-              +
-            </button>
+            <div className="journalTopRight">
+              <button className="btnSecondary" style={{ marginRight: 5 }} onClick={() => setAskOpen(true)}>
+                Ask Gemini
+              </button>
+              <button className="iconBtn" onClick={() => navigate('/sleep/log')}>
+                +
+              </button>
+            </div>
           }
         >
           {/* Graph */}
@@ -227,20 +285,17 @@ export default function SleepDashboard() {
                 )
               })}
             </svg>
-
             <p className="sleepHint small">Green = 6.5–8.5 hours. Red = outside that range.</p>
           </div>
 
           {/* Weekly averages */}
           <div className="sleepCardSm pageCard section">
             <h2 className="sleepH2">Weekly average (this month)</h2>
-
             <div className="sleepTableHead">
               <div>Week</div>
               <div className="sleepRight">Avg hours</div>
               <div className="sleepRight">Days logged</div>
             </div>
-
             {weekAverages.map((w) => (
               <div key={w.label} className="sleepRow">
                 <div>{w.label}</div>
@@ -253,22 +308,15 @@ export default function SleepDashboard() {
           {/* Bedtime helper */}
           <div className="sleepCardSm pageCard section">
             <h2 className="sleepH2">When should you fall asleep?</h2>
-
             <label className="sleepLabel">When do you want to wake up?</label>
-
             <select className="sleepSelect" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)}>
               {Array.from({ length: 48 }).map((_, i) => {
                 const hh = pad2(Math.floor(i / 2))
                 const mm = i % 2 === 0 ? '00' : '30'
                 const t = `${hh}:${mm}`
-                return (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                )
+                return <option key={t} value={t}>{t}</option>
               })}
             </select>
-
             <div className="sleepBedList">
               {bedtimeOptions.map((b) => (
                 <div key={b.cycles} className="sleepBedRow">
@@ -279,11 +327,74 @@ export default function SleepDashboard() {
                 </div>
               ))}
             </div>
-
             <p className="sleepHint2 small">Assumes ~15 minutes to fall asleep.</p>
           </div>
         </PageShell>
       </div>
+
+      {/* ASK GEMINI MODAL */}
+      {askOpen && (
+        <div className="geminiModalOverlay" onClick={() => setAskOpen(false)}>
+          <div className="geminiModal" onClick={(e) => e.stopPropagation()}>
+            <div className="geminiModalHeader">
+              <div className="geminiModalTitle">Ask Gemini</div>
+              <button className="iconBtn" onClick={() => setAskOpen(false)}>✕</button>
+            </div>
+
+            <div style={{
+                maxHeight: 280,
+                overflowY: 'auto',
+                padding: 10,
+                borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.18)',
+                background: 'rgba(255,255,255,0.06)',
+                marginBottom: 10,
+                whiteSpace: 'pre-wrap'
+            }}>
+              {messages.length === 0 ? (
+                <div style={{ opacity: 0.75 }}>Ask something to start…</div>
+              ) : (
+                messages.map((m, i) => (
+                  <div key={i} style={{ marginBottom: 10, textAlign: m.role === 'user' ? 'right' : 'left' }}>
+                    <div style={{ fontWeight: 800, fontSize: 12, opacity: 0.8 }}>{m.role === 'user' ? 'You' : 'Gemini'}</div>
+                    <div style={{
+                        display: 'inline-block',
+                        padding: '10px 12px',
+                        borderRadius: 14,
+                        border: '1px solid rgba(255,255,255,0.18)',
+                        background: 'rgba(255,255,255,0.08)',
+                        maxWidth: '85%'
+                    }}>
+                      {m.text}
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            <textarea
+              className="geminiTextarea"
+              rows={4}
+              placeholder="Type your message…"
+              value={geminiText}
+              onChange={(e) => setGeminiText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSendGemini()
+                }
+              }}
+            />
+
+            <div className="geminiModalActions">
+              <button className="btnGhost" onClick={() => setMessages([])} disabled={sending}>Clear chat</button>
+              <button className="btnGhost" onClick={() => setAskOpen(false)}>Close</button>
+              <button className="btnPrimary" onClick={handleSendGemini} disabled={sending}>{sending ? 'Sending…' : 'Send'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
