@@ -48,6 +48,11 @@ const Landing = ({ session }) => {
   const [debugSegments, setDebugSegments] = useState(false);
   const [octoClips] = useState(DEFAULT_CLIPS);
 
+  // --- NEW: one-up visual trigger state ---
+  // This is only for the animation; it does not affect DB or logic.
+  const [oneUpTrigger, setOneUpTrigger] = useState(0);
+  const oneUpTimerRef = useRef(null);
+
   // Sync state with local storage
   useEffect(() => {
     const loaded = loadOctoState();
@@ -59,6 +64,23 @@ const Landing = ({ session }) => {
   useEffect(() => {
     saveOctoState(octoState);
   }, [octoState]);
+
+  // Clean up one-up timer and reset when trigger changes
+  useEffect(() => {
+    if (oneUpTrigger === 0) return;
+    // clear any existing timer so re-triggers behave correctly
+    if (oneUpTimerRef.current) clearTimeout(oneUpTimerRef.current);
+    oneUpTimerRef.current = setTimeout(() => {
+      setOneUpTrigger(0);
+      oneUpTimerRef.current = null;
+    }, 1600); // matches animation duration
+    return () => {
+      if (oneUpTimerRef.current) {
+        clearTimeout(oneUpTimerRef.current);
+        oneUpTimerRef.current = null;
+      }
+    };
+  }, [oneUpTrigger]);
 
   // --- 4. Realtime Notifications Logic ---
   useEffect(() => {
@@ -167,6 +189,10 @@ const Landing = ({ session }) => {
     const next = (data?.octopus_count ?? 0) + 1;
     await supabase.from('profiles').update({ octopus_count: next }).eq('id', session.user.id);
     setProfileOctopusCount(next);
+
+    // VISUAL: trigger the floating "+🐙" animation
+    // increment the trigger so it remounts / restarts if triggered consecutively
+    setOneUpTrigger((n) => n + 1);
   }, [session?.user?.id]);
 
   useEffect(() => {
@@ -408,6 +434,11 @@ const Landing = ({ session }) => {
           <p className="subtitle">Small splashes lead to big ripples</p>
         </div>
         <div className="octoHub">
+          {/* Floating 1UP visual — appears above the octopus when triggered */}
+          {oneUpTrigger > 0 && (
+            <div key={oneUpTrigger} className="oneUp">+🐙</div>
+          )}
+
           <div className={`octoLayer ${debugSegments ? 'octoLayer--debug' : ''}`}>
             <OctopusSegments src={octo} progress={octoState.progress} debug={debugSegments} clips={octoClips} />
           </div>
@@ -449,7 +480,7 @@ const Landing = ({ session }) => {
                 <div style={profileStyles.friendValue}>{profilePoints ?? 0}</div>
 
                 <div style={profileStyles.friendLabel}>Octopus Count</div>
-                <div style={profileStyles.friendValue}>{profileOctopusCount ?? 0}</div>
+                <div style={profileStyles.friendValue}>🐙{profileOctopusCount ?? 0}</div>
               </>
             )}
 

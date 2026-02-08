@@ -550,3 +550,48 @@ p, h1, h2 {
   outline: none;
   box-shadow: 0 0 0 3px rgba(200, 200, 200, 0.35), 0 16px 38px rgba(0, 0, 0, 0.42);
 }
+
+/* (Your existing Landing.css content goes here — I assume you already have it.)
+   Below are the appended rules for the floating +🐙 animation. */
+
+/* Floating +🐙 "1UP" style animation */
+.oneUp {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  /* position it above the octopus; tweak if you want it higher/lower */
+  bottom: calc(50% + 180px);
+  z-index: 6;
+  pointer-events: none;
+  font-weight: 900;
+  font-size: clamp(1.2rem, 2.6vw, 1.9rem);
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 8px 20px rgba(0,0,0,0.5);
+  /* subtle highlight so it reads on dark background */
+  padding: 4px 8px;
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  animation: floatUpFade 1.6s cubic-bezier(.2,.9,.2,1) forwards;
+}
+
+/* when you want a softer colored +1, swap color to e.g. #ffefc7; currently white per your request */
+@keyframes floatUpFade {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px) scale(0.98);
+  }
+  10% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-26px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-40px) scale(1);
+  }
+}

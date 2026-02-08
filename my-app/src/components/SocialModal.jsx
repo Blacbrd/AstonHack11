@@ -534,7 +534,7 @@ export default function SocialModal({ session, onClose, initialMode = 'search' }
 
                 {/* ✅ NEW: Octopus Count */}
                 <div style={styles.friendLabel}>Octopus Count</div>
-                <div style={styles.friendValue}>{friendProfile?.octopus_count ?? 0}</div>
+                <div style={styles.friendValue}>🐙{friendProfile?.octopus_count ?? 0}</div>
               </>
             )}
 
