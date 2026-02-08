@@ -1,9 +1,12 @@
+// src/pages/MeditationPage.jsx
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom"; // Added for navigation
+import { useNavigate } from "react-router-dom";
 import LoadingScreen from "../components/LoadingScreen2";
 import BreathButton from "../components/BreathButton";
+import "./MeditationPage.css";
 
-const FINISH_LINE = "Congrats on finishing your meditation session. See you tomorrow!";
+const FINISH_LINE =
+  "Congrats on finishing your meditation session. See you tomorrow!";
 
 const SESSION_5_MIN = 5 * 60 * 1000;
 const SESSION_10_MIN = 10 * 60 * 1000;
@@ -41,7 +44,7 @@ const formatMMSS = (ms) => {
 };
 
 export default function MeditationPage() {
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
   const audioRef = useRef(null);
 
   const finishLockRef = useRef(false);
@@ -76,7 +79,6 @@ export default function MeditationPage() {
 
     setCaption(text);
 
-    // FIXED: Point to port 8000 (where your FastAPI backend is running)
     const res = await fetch("http://localhost:8000/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -147,7 +149,6 @@ export default function MeditationPage() {
 
   const playFlow = async (runId) => {
     try {
-      // 1. Run the defined flow (Intro + Exercises)
       for (const item of FLOW) {
         if (finishLockRef.current || runIdRef.current !== runId) return;
 
@@ -162,26 +163,21 @@ export default function MeditationPage() {
         }
       }
 
-      // 2. FILLER LOGIC: If flow finished early, breathe until the timer ends
       if (!finishLockRef.current && runIdRef.current === runId) {
         const elapsed = Date.now() - startTimeRef.current;
         const paddingTime = sessionMsRef.current - elapsed;
 
-        // If we have meaningful time left (> 2 seconds), wait it out
         if (paddingTime > 2000) {
           setCaption("Continue breathing at your own pace...");
-          setBreathActive(true); // Keep the animation going
-          // Wait until the timer runs out
+          setBreathActive(true);
           await sleep(paddingTime);
           setBreathActive(false);
         }
       }
 
-      // 3. Finish
       if (!finishLockRef.current && runIdRef.current === runId) {
-        // Clear the hard stop so it doesn't interrupt the finish message
         if (hardStopRef.current) clearTimeout(hardStopRef.current);
-        
+
         await playTTS(FINISH_LINE, runId);
         setStep("finished");
       }
@@ -208,19 +204,13 @@ export default function MeditationPage() {
     const start = Date.now();
     setRemainingMs(sessionMs);
 
-    // Update UI timer
     timerIntervalRef.current = setInterval(() => {
       const elapsed = Date.now() - start;
       const left = Math.max(sessionMs - elapsed, 0);
       setRemainingMs(left);
-      
-      // Safety: if we hit 0 here, ensure we stop visual timer, 
-      // but let playFlow handle the transition to 'finished'.
       if (left <= 0) clearInterval(timerIntervalRef.current);
     }, 250);
 
-    // Safety Net: Force quit if we go WAY over time (buffer 15s for "Congrats" message)
-    // This prevents infinite loops if something breaks.
     hardStopRef.current = setTimeout(() => {
       if (step !== "finished") {
         finishLockRef.current = true;
@@ -256,105 +246,174 @@ export default function MeditationPage() {
     };
   }, []);
 
-  // ---------- UI ----------
   let content = null;
 
   if (step === "loading") {
-    content = <LoadingScreen message="Preparing your meditation..." />;
+    content = (
+      <div className="medPage">
+        <div className="medBg" />
+        <div className="medRays" />
+        <div className="medSeaweed">
+          <svg viewBox="0 0 1200 700" preserveAspectRatio="none">
+            <g className="medSway medD1">
+              <path className="medThick" d="M40,700 C90,560 20,460 70,320 C110,200 90,120 120,0" />
+              <path className="medThin" d="M90,700 C140,560 80,470 120,330 C160,210 140,140 160,0" />
+              <path className="medThin" d="M160,700 C210,560 150,470 190,340 C240,220 220,150 240,0" />
+            </g>
+
+            <g className="medSway medD2">
+              <path className="medThick" d="M1040,700 C990,560 1060,460 1010,320 C970,200 990,120 960,0" />
+              <path className="medThin" d="M1090,700 C1040,560 1100,470 1060,330 C1020,210 1040,140 1020,0" />
+              <path className="medThin" d="M980,700 C930,560 990,470 950,340 C900,220 920,150 900,0" />
+            </g>
+          </svg>
+        </div>
+
+        <div className="medContent">
+          <LoadingScreen message="Preparing your meditation..." />
+        </div>
+
+        <audio ref={audioRef} />
+      </div>
+    );
   }
 
   if (step === "select") {
     content = (
-      <div style={{ maxWidth: 900, margin: "48px auto", padding: "0 16px" }}>
-        {/* --- BACK BUTTON --- */}
-        <button 
-          onClick={() => navigate('/')}
-          style={{
-            marginBottom: '20px',
-            padding: '8px 16px',
-            backgroundColor: '#333',
-            color: 'white',
-            border: '1px solid #555',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          ← Back
-        </button>
+      <div className="medPage">
+        <div className="medBg" />
+        <div className="medRays" />
+        <div className="medSeaweed">
+          <svg viewBox="0 0 1200 700" preserveAspectRatio="none">
+            <g className="medSway medD1">
+              <path className="medThick" d="M40,700 C90,560 20,460 70,320 C110,200 90,120 120,0" />
+              <path className="medThin" d="M90,700 C140,560 80,470 120,330 C160,210 140,140 160,0" />
+              <path className="medThin" d="M160,700 C210,560 150,470 190,340 C240,220 220,150 240,0" />
+            </g>
 
-        <h1>Meditation</h1>
-
-        <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
-          <button onClick={() => startSession(SESSION_5_MIN)}>5 minutes</button>
-          <button onClick={() => startSession(SESSION_10_MIN)}>10 minutes</button>
-          <button onClick={() => startSession(SESSION_15_MIN)}>15 minutes</button>
+            <g className="medSway medD2">
+              <path className="medThick" d="M1040,700 C990,560 1060,460 1010,320 C970,200 990,120 960,0" />
+              <path className="medThin" d="M1090,700 C1040,560 1100,470 1060,330 C1020,210 1040,140 1020,0" />
+              <path className="medThin" d="M980,700 C930,560 990,470 950,340 C900,220 920,150 900,0" />
+            </g>
+          </svg>
         </div>
 
-        {error && <pre style={{ color: "#ff6b6b" }}>{error}</pre>}
+        <div className="medContent">
+          <div className="medWrap">
+            <button className="medBackBtn" onClick={() => navigate("/")}>
+              ← Back
+            </button>
+
+            <h1 className="medTitle">Meditation</h1>
+
+            <div className="medButtons">
+              <button className="medBtn" onClick={() => startSession(SESSION_5_MIN)}>5 minutes</button>
+              <button className="medBtn" onClick={() => startSession(SESSION_10_MIN)}>10 minutes</button>
+              <button className="medBtn" onClick={() => startSession(SESSION_15_MIN)}>15 minutes</button>
+            </div>
+
+            {error && <pre className="medError">{error}</pre>}
+          </div>
+        </div>
+
+        <audio ref={audioRef} />
       </div>
     );
   }
 
   if (step === "session") {
     content = (
-      <div style={{ maxWidth: 900, margin: "32px auto", padding: "0 16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontSize: 18, fontVariantNumeric: "tabular-nums" }}>
-            {formatMMSS(remainingMs)}
-          </div>
+      <div className="medPage">
+        <div className="medBg" />
+        <div className="medRays" />
+        <div className="medSeaweed">
+          <svg viewBox="0 0 1200 700" preserveAspectRatio="none">
+            <g className="medSway medD1">
+              <path className="medThick" d="M40,700 C90,560 20,460 70,320 C110,200 90,120 120,0" />
+              <path className="medThin" d="M90,700 C140,560 80,470 120,330 C160,210 140,140 160,0" />
+              <path className="medThin" d="M160,700 C210,560 150,470 190,340 C240,220 220,150 240,0" />
+            </g>
 
-          <h2 style={{ margin: 0 }}>
-            {Math.round(sessionMsRef.current / 60000)}-minute meditation
-          </h2>
-
-          <button onClick={quitEarly}>Quit</button>
+            <g className="medSway medD2">
+              <path className="medThick" d="M1040,700 C990,560 1060,460 1010,320 C970,200 990,120 960,0" />
+              <path className="medThin" d="M1090,700 C1040,560 1100,470 1060,330 C1020,210 1040,140 1020,0" />
+              <path className="medThin" d="M980,700 C930,560 990,470 950,340 C900,220 920,150 900,0" />
+            </g>
+          </svg>
         </div>
 
-        {caption && (
-          <div
-            style={{
-              marginTop: 16,
-              marginBottom: 12,
-              padding: "12px 16px",
-              textAlign: "center",
-              fontSize: 16,
-              lineHeight: 1.5,
-              background: "rgba(0,0,0,0.35)",
-              borderRadius: 12,
-              color: "#fff",
-              maxWidth: 720,
-              marginLeft: "auto",
-              marginRight: "auto",
-            }}
-          >
-            {caption}
-          </div>
-        )}
+        <div className="medContent">
+          <div className="medWrap">
+            <div className="medTopRow">
+              <div className="medTimer">{formatMMSS(remainingMs)}</div>
 
-        <BreathButton
-          active={breathActive}
-          phase={breathPhase}
-          inhaleMs={4000}
-          exhaleMs={6000}
-        />
+              <h2 className="medH2">
+                {Math.round(sessionMsRef.current / 60000)}-minute meditation
+              </h2>
+
+              <button className="medQuitBtn" onClick={quitEarly}>
+                Quit
+              </button>
+            </div>
+
+            {caption && (
+              <div className="medCaption">
+                {caption}
+              </div>
+            )}
+
+            <div className="medBreathWrap">
+              <BreathButton
+                active={breathActive}
+                phase={breathPhase}
+                inhaleMs={4000}
+                exhaleMs={6000}
+              />
+            </div>
+          </div>
+        </div>
+
+        <audio ref={audioRef} />
       </div>
     );
   }
 
   if (step === "finished") {
     content = (
-      <div style={{ maxWidth: 900, margin: "48px auto", padding: "0 16px" }}>
-        <h1>Session complete</h1>
-        <p>{FINISH_LINE}</p>
-        <button onClick={() => setStep("select")}>Exit</button>
+      <div className="medPage">
+        <div className="medBg" />
+        <div className="medRays" />
+        <div className="medSeaweed">
+          <svg viewBox="0 0 1200 700" preserveAspectRatio="none">
+            <g className="medSway medD1">
+              <path className="medThick" d="M40,700 C90,560 20,460 70,320 C110,200 90,120 120,0" />
+              <path className="medThin" d="M90,700 C140,560 80,470 120,330 C160,210 140,140 160,0" />
+              <path className="medThin" d="M160,700 C210,560 150,470 190,340 C240,220 220,150 240,0" />
+            </g>
+
+            <g className="medSway medD2">
+              <path className="medThick" d="M1040,700 C990,560 1060,460 1010,320 C970,200 990,120 960,0" />
+              <path className="medThin" d="M1090,700 C1040,560 1100,470 1060,330 C1020,210 1040,140 1020,0" />
+              <path className="medThin" d="M980,700 C930,560 990,470 950,340 C900,220 920,150 900,0" />
+            </g>
+          </svg>
+        </div>
+
+        <div className="medContent">
+          <div className="medWrap">
+            <h1 className="medTitle">Session complete</h1>
+            <p className="medFinishText">{FINISH_LINE}</p>
+            <button className="medBtn" onClick={() => setStep("select")}>
+              Exit
+            </button>
+          </div>
+        </div>
+
+        <audio ref={audioRef} />
       </div>
     );
   }
 
-  return (
-    <>
-      {content}
-      <audio ref={audioRef} />
-    </>
-  );
+  return content;
 }

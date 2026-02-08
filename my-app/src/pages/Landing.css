@@ -1,0 +1,274 @@
+/* src/pages/Landing.css */
+
+/* =========================
+   PAGE LAYOUT
+   ========================= */
+
+.landing {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  color: white;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+/* ===== Ocean background ===== */
+.landing::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(900px 500px at 20% 10%, rgba(56, 189, 248, 0.18), transparent 60%),
+    radial-gradient(700px 500px at 80% 30%, rgba(34, 197, 94, 0.10), transparent 55%),
+    linear-gradient(180deg, #06111c 0%, #041a2a 35%, #022236 70%, #011827 100%);
+}
+
+/* ===== Light rays overlay ===== */
+.landing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.30;
+  background: repeating-linear-gradient(
+    105deg,
+    rgba(255,255,255,0.08) 0px,
+    rgba(255,255,255,0.02) 60px,
+    transparent 140px
+  );
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+}
+
+/* =========================
+   BUBBLES (CSS-only, subtle, slower)
+   IMPORTANT: uses landingContent::before
+   ========================= */
+
+.landingContent::before {
+  content: "";
+  position: absolute;
+  inset: -140px;
+  pointer-events: none;
+  z-index: 0;
+
+  /* fewer bubbles */
+  background:
+    radial-gradient(circle at 12% 125%, rgba(255,255,255,0.14) 0 2px, transparent 3px),
+    radial-gradient(circle at 28% 135%, rgba(255,255,255,0.10) 0 3px, transparent 4px),
+    radial-gradient(circle at 55% 145%, rgba(255,255,255,0.12) 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 140%, rgba(255,255,255,0.10) 0 3px, transparent 4px),
+    radial-gradient(circle at 90% 128%, rgba(255,255,255,0.12) 0 2px, transparent 3px);
+
+  opacity: 0.45;
+  filter: blur(0.25px);
+  animation: landingBubbles 16s linear infinite;
+}
+
+@keyframes landingBubbles {
+  0%   { transform: translateY(18%); opacity: 0.0; }
+  20%  { opacity: 0.45; }
+  55%  { opacity: 0.55; }
+  85%  { opacity: 0.18; }
+  100% { transform: translateY(-110%); opacity: 0; }
+}
+
+/* =========================
+   SEAWEED LAYER (SVG sway)
+   IMPORTANT: requires <div className="landing-seaweed"> in JSX
+   ========================= */
+
+.landing .landing-seaweed {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.78;
+}
+
+@keyframes landingSeaweedSway {
+  0%   { transform: translateX(0px) rotate(0deg); }
+  50%  { transform: translateX(3px) rotate(0.4deg); }
+  100% { transform: translateX(0px) rotate(0deg); }
+}
+
+.landing-seaweed svg {
+  width: 100%;
+  height: 100%;
+}
+
+.landing-seaweed .sway {
+  transform-origin: 50px 100px;
+  animation: landingSeaweedSway 8.6s ease-in-out infinite;
+}
+
+.landing-seaweed .thick {
+  fill: none;
+  stroke: rgba(34,197,94,0.36);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.landing-seaweed .thin {
+  fill: none;
+  stroke: rgba(34,197,94,0.22);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+/* =========================
+   CONTENT LAYER
+   ========================= */
+
+.landingContent {
+  position: relative;
+  z-index: 3; /* above bubbles + seaweed */
+  width: min(1100px, 96vw);
+  display: grid;
+  place-items: center;
+}
+
+/* Title */
+.title {
+  margin: 0 0 10px 0;
+  font-size: clamp(2.2rem, 3.6vw, 3.4rem);
+  letter-spacing: -0.02em;
+  text-align: center;
+  text-shadow: 0 10px 40px rgba(0,0,0,0.45);
+}
+
+/* Top right header */
+.header {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  z-index: 4;
+}
+
+/* =========================
+   OCTO HUB
+   ========================= */
+
+.octoHub {
+  position: relative;
+  width: 860px;
+  height: 640px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Octopus bigger */
+.octo {
+  width: 720px;
+  max-width: 92vw;
+  height: auto;
+  z-index: 2;
+  animation: floaty 3.8s ease-in-out infinite;
+  filter: drop-shadow(0 18px 38px rgba(0,0,0,0.55));
+}
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+/* =========================
+   TENTACLE BUTTONS (glass style)
+   ========================= */
+
+.tentacle {
+    
+     z-index: 999;          /* ensure it’s above everything */
+  pointer-events: auto;
+  position: absolute;
+  padding: 20px 18px;
+  border-radius: 999px;
+
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+
+  color: white;
+  font-weight: 900;
+  cursor: pointer;
+
+  box-shadow: 0 18px 50px rgba(0,0,0,0.38);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s, border-color 0.2s;
+  -webkit-clip-path: inset(0 round 999px);
+  clip-path: inset(0 round 999px);
+
+  /* optional: keeps emoji/text nicely aligned */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+.tentacle:hover {
+  transform: scale(1.06);
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 0 26px rgba(56,189,248,0.18), 0 18px 50px rgba(0,0,0,0.38);
+}
+
+/* Disabled */
+.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.10);
+  box-shadow: none;
+}
+
+.disabled:hover {
+  transform: none;
+  background: rgba(255,255,255,0.05);
+  box-shadow: none;
+}
+
+/* Positions: 3 left / 3 right */
+.t1 { top: 30%; left: -10px; }
+.t2 { top: 52%; left: -40px; }
+.t3 { top: 70%; left: 40px; }
+
+.t4 { top: 30%; right: -10px; }
+.t5 { top: 52%; right: -40px; }
+.t6 { top: 74%; right: -10px; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .octoHub { width: 92vw; height: 620px; }
+  .octo { width: 88vw; }
+  .tentacle { font-size: 14px; padding: 10px 14px; }
+}
+
+/* Tiny helper */
+p, h1, h2 {
+  text-rendering: optimizeLegibility;
+}
+/* Never let background overlays steal clicks */
+.landing::before,
+.landing::after,
+.landingContent::before {
+  pointer-events: none;
+}
+
+/* SVG seaweed can steal clicks unless you also disable it for the SVG shapes */
+.landing-seaweed,
+.landing-seaweed svg,
+.landing-seaweed * {
+  pointer-events: none;
+}
+
+/* Octopus image should never block button clicks */
+.octo {
+  pointer-events: none;
+}
