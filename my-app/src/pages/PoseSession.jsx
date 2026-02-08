@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Webcam from 'react-webcam'
+import { logTodayAndSave } from '../components/octopusProgress'
 import './PoseSession.css'
 
 const PoseSession = () => {
@@ -16,6 +17,9 @@ const PoseSession = () => {
   const lastSentRef = useRef(0)
   const wsBusyRef = useRef(false)
   const runningRef = useRef(true)
+
+  // ✅ prevent double logging
+  const didLogRef = useRef(false)
 
   // Lower resolution for faster transmission
   const videoConstraints = {
@@ -111,6 +115,15 @@ const PoseSession = () => {
     }
   }, [poseName])
 
+  // ✅ END SESSION HANDLER (YOGA DONE)
+  const endSession = () => {
+    if (!didLogRef.current) {
+      logTodayAndSave('yoga')
+      didLogRef.current = true
+    }
+    navigate('/yoga')
+  }
+
   return (
     <div className="pose-session-container pose-session-underwater">
       {/* Underwater background layers */}
@@ -165,7 +178,7 @@ const PoseSession = () => {
       {/* Foreground UI */}
       <div className="pose-session-foreground">
         <div className="pose-session-header">
-          <button className="pose-session-back-btn" onClick={() => navigate('/yoga')}>
+          <button className="pose-session-back-btn" onClick={endSession}>
             ← End Session
           </button>
           <h2 className="pose-session-title">
@@ -185,10 +198,16 @@ const PoseSession = () => {
             />
 
             {annotatedImage && (
-              <img src={annotatedImage} alt="AI Overlay" className="pose-session-media pose-session-annotated" />
+              <img
+                src={annotatedImage}
+                alt="AI Overlay"
+                className="pose-session-media pose-session-annotated"
+              />
             )}
 
-            {!annotatedImage && <div className="pose-session-loading">Loading Vision Model...</div>}
+            {!annotatedImage && (
+              <div className="pose-session-loading">Loading Vision Model...</div>
+            )}
           </div>
 
           {/* Stats Area */}

@@ -272,3 +272,262 @@ p, h1, h2 {
 .octo {
   pointer-events: none;
 }
+/* =========================
+   OCTOPUS SEGMENTS LAYER (PNG -> grayscale base + clipped orange segments)
+   This replaces the <img class="octo"> but keeps the same size/animation vibe.
+   ========================= */
+
+.octoLayer {
+  width: 720px;
+  max-width: 92vw;
+  height: auto;
+  z-index: 2;
+  animation: floaty 3.8s ease-in-out infinite;
+  filter: drop-shadow(0 18px 38px rgba(0,0,0,0.55));
+  pointer-events: none; /* IMPORTANT: never steal clicks from your buttons */
+}
+
+/* The svg inside should scale like the old <img> */
+.octoLayer .octoSvg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* When debugging alignment, allow clicking the segment boxes */
+.octoLayer--debug {
+  pointer-events: auto;
+}
+
+/* Small debug toggle button inside octoHub (safe + removable) */
+.octoDebugToggle {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.28);
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.octoDebugToggle:hover {
+  background: rgba(0,0,0,0.38);
+}
+.octoCopyClips {
+  position: absolute;
+  bottom: 16px;
+  left: calc(50% + 120px);
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.28);
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.octoCopyClips:hover {
+  background: rgba(0,0,0,0.38);
+}
+
+.octoRagoBtn {
+  position: absolute;
+  left: 18px;
+  bottom: 70px;
+
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+
+  background: linear-gradient(135deg, rgba(255, 170, 80, 0.95), rgba(255, 120, 90, 0.95));
+  color: rgba(15, 15, 15, 0.92);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.2px;
+
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.octoRagoBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42);
+}
+
+.octoRagoBtn:active {
+  transform: translateY(0px) scale(0.99);
+}
+
+.octoRagoBtn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 170, 80, 0.25), 0 16px 38px rgba(0, 0, 0, 0.42);
+}
+/* RESET BUTTON — matches RAGO style but neutral */
+.octoResetBtn {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+
+  background: linear-gradient(
+    135deg,
+    rgba(180, 180, 180, 0.95),
+    rgba(140, 140, 140, 0.95)
+  );
+  color: rgba(20, 20, 20, 0.95);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.2px;
+
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.octoResetBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42);
+}
+
+.octoResetBtn:active {
+  transform: translateY(0px) scale(0.99);
+}
+
+.octoResetBtn:focus {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(200, 200, 200, 0.35),
+    0 16px 38px rgba(0, 0, 0, 0.42);
+}
+/* RAGO 1 */
+.octoRagoBtn {
+  position: absolute;
+  left: 18px;
+  bottom: 70px;
+
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+
+  background: linear-gradient(135deg, rgba(255, 170, 80, 0.95), rgba(255, 120, 90, 0.95));
+  color: rgba(15, 15, 15, 0.92);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.2px;
+
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.octoRagoBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42);
+}
+
+.octoRagoBtn:active {
+  transform: translateY(0px) scale(0.99);
+}
+
+.octoRagoBtn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 170, 80, 0.25), 0 16px 38px rgba(0, 0, 0, 0.42);
+}
+
+/* RAGO 2 */
+.octoRago2Btn {
+  position: absolute;
+  left: 18px;
+  bottom: 120px;
+
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+
+  background: linear-gradient(135deg, rgba(130, 180, 255, 0.95), rgba(90, 140, 220, 0.95));
+  color: rgba(10, 20, 40, 0.95);
+
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.3px;
+
+  cursor: pointer;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.octoRago2Btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.48);
+}
+
+.octoRago2Btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.octoRago2Btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(120, 170, 255, 0.35), 0 18px 42px rgba(0, 0, 0, 0.48);
+}
+
+/* RESET */
+.octoResetBtn {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+
+  background: linear-gradient(135deg, rgba(180, 180, 180, 0.95), rgba(140, 140, 140, 0.95));
+  color: rgba(20, 20, 20, 0.95);
+
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.2px;
+
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.octoResetBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42);
+}
+
+.octoResetBtn:active {
+  transform: translateY(0px) scale(0.99);
+}
+
+.octoResetBtn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(200, 200, 200, 0.35), 0 16px 38px rgba(0, 0, 0, 0.42);
+}

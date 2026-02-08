@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LoadingScreen from "../components/LoadingScreen2";
 import BreathButton from "../components/BreathButton";
+import { logTodayAndSave } from "../components/octopusProgress";
 import "./MeditationPage.css";
 
 const FINISH_LINE =
@@ -49,6 +50,8 @@ export default function MeditationPage() {
 
   const finishLockRef = useRef(false);
   const runIdRef = useRef(0);
+
+  const didLogRef = useRef(false); // ✅ prevent double-log
 
   const timerIntervalRef = useRef(null);
   const hardStopRef = useRef(null);
@@ -178,6 +181,12 @@ export default function MeditationPage() {
       if (!finishLockRef.current && runIdRef.current === runId) {
         if (hardStopRef.current) clearTimeout(hardStopRef.current);
 
+        // ✅ Log completion ONCE when the session truly completes
+        if (!didLogRef.current) {
+          logTodayAndSave("meditation");
+          didLogRef.current = true;
+        }
+
         await playTTS(FINISH_LINE, runId);
         setStep("finished");
       }
@@ -198,6 +207,8 @@ export default function MeditationPage() {
     const runId = runIdRef.current;
 
     finishLockRef.current = false;
+    didLogRef.current = false;
+
     sessionMsRef.current = sessionMs;
     startTimeRef.current = Date.now();
 
@@ -212,12 +223,11 @@ export default function MeditationPage() {
     }, 250);
 
     hardStopRef.current = setTimeout(() => {
-      if (step !== "finished") {
-        finishLockRef.current = true;
-        stopAudio();
-        setCaption("");
-        setStep("finished");
-      }
+      // Hard stop for safety: we DO NOT log here (only log on true completion)
+      finishLockRef.current = true;
+      stopAudio();
+      setCaption("");
+      setStep("finished");
     }, sessionMs + 15000);
 
     setTimeout(() => {

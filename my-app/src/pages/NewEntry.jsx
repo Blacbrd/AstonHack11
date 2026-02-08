@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import './NewEntry.css'
+import { logTodayAndSave } from '../components/octopusProgress'
 
 export default function NewEntry({ mode }) {
   const navigate = useNavigate()
@@ -38,6 +39,7 @@ export default function NewEntry({ mode }) {
   }, [mode, id])
 
   const saveAndGoBack = async () => {
+    // If they didn't write anything, don't count it as "done"
     if (!title.trim() && !content.trim()) {
       navigate('/journal')
       return
@@ -75,6 +77,10 @@ export default function NewEntry({ mode }) {
 
         if (error) throw error
       }
+
+      // ✅ Count journal as "done" for today (one segment, once per day)
+      // Your progress system prevents double logging automatically.
+      logTodayAndSave('journal')
     } catch (error) {
       console.error('Error saving journal:', error.message)
     }
