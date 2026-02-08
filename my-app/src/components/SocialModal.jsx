@@ -17,7 +17,7 @@ export default function SocialModal({ session, onClose, initialMode = 'search' }
   // ---------------------------
   const [showFriendProfile, setShowFriendProfile] = useState(false);
   const [friendProfileLoading, setFriendProfileLoading] = useState(false);
-  const [friendProfile, setFriendProfile] = useState(null); // { username, points }
+  const [friendProfile, setFriendProfile] = useState(null); // { username, points, octopus_count }
   const [friendProfileError, setFriendProfileError] = useState('');
 
   // Use a ref to access the current search term inside the realtime callback
@@ -296,39 +296,37 @@ export default function SocialModal({ session, onClose, initialMode = 'search' }
   // ✅ 4.5 FRIEND PROFILE POPUP ACTIONS
   // ---------------------------
 
-  const openFriendProfile = useCallback(
-    async (friendUserId) => {
-      setShowFriendProfile(true);
-      setFriendProfileLoading(true);
-      setFriendProfile(null);
-      setFriendProfileError('');
+  const openFriendProfile = useCallback(async (friendUserId) => {
+    setShowFriendProfile(true);
+    setFriendProfileLoading(true);
+    setFriendProfile(null);
+    setFriendProfileError('');
 
-      try {
-        // If profiles table uses user_id instead of id, change this line accordingly.
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username, points, email')
-          .eq('id', friendUserId)
-          .single();
+    try {
+      // ✅ Added octopus_count here
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, points, octopus_count, email')
+        .eq('id', friendUserId)
+        .single();
 
-        if (error) throw error;
+      if (error) throw error;
 
-        setFriendProfile({
-          username: data?.username || 'User',
-          email: data?.email || '',
-          points: Number.isFinite(data?.points) ? data.points : 0,
-        });
-      } catch (err) {
-        console.error('Error fetching friend profile:', err);
-        setFriendProfileError(
-          'Could not load profile (check RLS policy for profiles).'
-        );
-      } finally {
-        setFriendProfileLoading(false);
-      }
-    },
-    []
-  );
+      setFriendProfile({
+        username: data?.username || 'User',
+        email: data?.email || '',
+        points: Number.isFinite(data?.points) ? data.points : 0,
+        octopus_count: Number.isFinite(data?.octopus_count) ? data.octopus_count : 0,
+      });
+    } catch (err) {
+      console.error('Error fetching friend profile:', err);
+      setFriendProfileError(
+        'Could not load profile (check RLS policy for profiles).'
+      );
+    } finally {
+      setFriendProfileLoading(false);
+    }
+  }, []);
 
   const closeFriendProfile = () => {
     setShowFriendProfile(false);
@@ -438,7 +436,6 @@ export default function SocialModal({ session, onClose, initialMode = 'search' }
                       Connected
                     </span>
 
-                    {/* ✅ NEW: View Profile button */}
                     <button
                       style={styles.btnViewProfile}
                       onClick={() => openFriendProfile(f.id)}
@@ -534,6 +531,10 @@ export default function SocialModal({ session, onClose, initialMode = 'search' }
 
                 <div style={styles.friendLabel}>Points</div>
                 <div style={styles.friendValue}>{friendProfile?.points ?? 0}</div>
+
+                {/* ✅ NEW: Octopus Count */}
+                <div style={styles.friendLabel}>Octopus Count</div>
+                <div style={styles.friendValue}>{friendProfile?.octopus_count ?? 0}</div>
               </>
             )}
 
@@ -720,7 +721,6 @@ const styles = {
     fontStyle: 'italic',
   },
 
-  // ✅ NEW: View Profile button style
   btnViewProfile: {
     padding: '6px 12px',
     borderRadius: '8px',
@@ -733,7 +733,6 @@ const styles = {
     whiteSpace: 'nowrap',
   },
 
-  // ✅ NEW: Friend profile popup styles
   friendBackdrop: {
     position: 'fixed',
     inset: 0,
