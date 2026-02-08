@@ -45,6 +45,7 @@ const PoseSession = () => {
   }, [])
 
   const checkIfInRoom = async (userId) => {
+    // Check if we are currently in an active room in DB
     const { data } = await supabase.from('yoga_rooms')
       .select('room_id, host_id, joiner_id')
       .or(`host_id.eq.${userId},joiner_id.eq.${userId}`)
@@ -61,35 +62,60 @@ const PoseSession = () => {
     }
   }
 
-  // 2. SUPABASE BROADCAST (Send/Receive Partner Video)
+  // 2. SUPABASE BROADCAST (FIXED: Robust Cleanup & Reconnect)
   useEffect(() => {
     if (!roomId || roomId === 'solo' || !session) return;
 
-    console.log(`📡 Connecting to Shared Room: ${roomId}`)
+    let isMounted = true;
+    const channelName = `room:${roomId}`;
 
-    const channel = supabase.channel(`room:${roomId}`, {
-      config: {
-        broadcast: { self: false } // Don't receive my own messages
+    const connectToRelay = async () => {
+      // 1. Force Cleanup of any existing channel on this Room ID
+      if (broadcastChannelRef.current) {
+        await supabase.removeChannel(broadcastChannelRef.current);
+        broadcastChannelRef.current = null;
       }
-    })
 
-    channel
-      .on('broadcast', { event: 'frame' }, (payload) => {
-        // RECEIVED PARTNER FRAME
-        if (payload.payload?.image) {
-          setPartnerImage(payload.payload.image)
+      if (!isMounted) return;
+
+      console.log(`📡 Connecting to Relay: ${channelName}`);
+
+      const channel = supabase.channel(channelName, {
+        config: {
+          broadcast: { self: false, ack: false } // ack: false makes it faster (fire and forget)
         }
-      })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') console.log("✅ Connected to Partner Stream")
-      })
+      });
 
-    broadcastChannelRef.current = channel
+      channel
+        .on('broadcast', { event: 'frame' }, (payload) => {
+          // RECEIVED PARTNER FRAME
+          if (payload.payload?.image) {
+            setPartnerImage(payload.payload.image)
+          }
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log("✅ Joined Video Relay Room");
+          }
+        });
+
+      broadcastChannelRef.current = channel;
+    };
+
+    // 2. Safety Timer: Wait 100ms before connecting to prevent race conditions
+    const timer = setTimeout(() => {
+      connectToRelay();
+    }, 100);
 
     return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [roomId, session])
+      isMounted = false;
+      clearTimeout(timer);
+      if (broadcastChannelRef.current) {
+        supabase.removeChannel(broadcastChannelRef.current);
+        broadcastChannelRef.current = null;
+      }
+    };
+  }, [roomId, session]);
 
   // 3. LOCAL PYTHON CONNECTION (Process My Video)
   useEffect(() => {
@@ -112,12 +138,17 @@ const PoseSession = () => {
         // We limit this to ~10fps to save bandwidth
         const now = performance.now()
         if (roomId && roomId !== 'solo' && broadcastChannelRef.current && (now - lastBroadcastRef.current > 100)) {
-          broadcastChannelRef.current.send({
-            type: 'broadcast',
-            event: 'frame',
-            payload: { image: response.image } // Send the processed AI image
-          })
-          lastBroadcastRef.current = now
+          
+          // Only send if the channel is actually ready
+          const state = broadcastChannelRef.current.state;
+          if (state === 'joined') {
+             broadcastChannelRef.current.send({
+              type: 'broadcast',
+              event: 'frame',
+              payload: { image: response.image } // Send the processed AI image
+            })
+            lastBroadcastRef.current = now
+          }
         }
 
       } catch (e) {
