@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import SocialModal from '../components/SocialModal';
@@ -13,41 +13,102 @@ const Landing = ({ session }) => {
   const [socialMode, setSocialMode] = useState('search'); 
   const [hasUnread, setHasUnread] = useState(false);
 
+  // Ref to track channel for cleanup
+  const channelRef = useRef(null);
+
   const username = session?.user?.user_metadata?.username || session?.user?.email?.split('@')[0] || 'User';
 
-  // --- Realtime Notifications Logic ---
+  // --- Realtime Notifications Logic (Fixed) ---
   useEffect(() => {
-    checkNotifications();
-    
-    // Subscribe to realtime notifications
-    const channel = supabase
-      .channel('public:notifications')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${session.user.id}` }, 
-      () => {
-        setHasUnread(true);
-      })
-      .subscribe();
+    if (!session?.user?.id) return;
 
-    return () => { supabase.removeChannel(channel); }
+    const myId = session.user.id;
+    let isMounted = true;
+
+    // 1. Initial Check
+    checkNotifications();
+
+    // 2. Define Subscription Logic
+    const connectRealtime = () => {
+      if (!isMounted) return;
+
+      // Clean up existing channel if any
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
+
+      console.log("[Landing] Subscribing to notifications...");
+
+      const channel = supabase
+        .channel(`public:notifications:${myId}`)
+        .on(
+          'postgres_changes', 
+          { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'notifications', 
+            filter: `user_id=eq.${myId}` 
+          }, 
+          (payload) => {
+            console.log("🔔 [Landing] New Notification!", payload);
+            setHasUnread(true);
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log("[Landing] Connected to notifications.");
+          }
+        });
+
+      channelRef.current = channel;
+    };
+
+    // 3. Safety Timer (Prevents WebSocket crash in Strict Mode)
+    const timer = setTimeout(() => {
+      connectRealtime();
+    }, 100);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
   }, [session.user.id]);
 
   const checkNotifications = async () => {
-    const { count } = await supabase
-      .from('notifications')
-      .select('id', { count: 'exact' })
-      .eq('user_id', session.user.id);
-    
-    if (count > 0) setHasUnread(true);
+    try {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true }) // head:true is faster, just gets count
+        .eq('user_id', session.user.id);
+      
+      if (error) {
+        console.error("[Landing] Error checking notifications:", error);
+        return;
+      }
+
+      console.log(`[Landing] Found ${count} unread notifications.`);
+      if (count > 0) setHasUnread(true);
+      else setHasUnread(false);
+    } catch (err) {
+      console.error("[Landing] Check failed:", err);
+    }
   };
 
   const handleLogout = async () => {
+    // Cleanup before logout
+    if (channelRef.current) supabase.removeChannel(channelRef.current);
     await supabase.auth.signOut();
   };
 
   const openSocial = (mode) => {
     setSocialMode(mode);
     setShowSocial(true);
-    if (mode === 'notifications') setHasUnread(false); // Clear badge locally
+    // Note: We don't clear 'hasUnread' instantly here; 
+    // usually you clear it after the user views/dismisses them in the modal.
+    // But if you want to clear the red dot immediately upon opening:
+    // setHasUnread(false); 
   };
 
   // --- Styles for Header Buttons (Social) ---
