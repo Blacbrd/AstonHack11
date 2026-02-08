@@ -1,5 +1,9 @@
 # 🐙Inklings🐙
 
+## Devpost Link:
+
+* https://devpost.com/software/inklings
+
 A comprehensive health and wellness application integrating ML, real-time collaboration, and tracking features. This platform allows users to track their diet, sleep, and mental health while utilizing ML for yoga form correction and guided meditation. It features a robust social system with real-time collaborative journaling.
 
 ## Features
