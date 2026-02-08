@@ -403,7 +403,10 @@ const Landing = ({ session }) => {
 
       {/* MAIN CONTENT */}
       <div className="landingContent">
-        <h1 className="title">Wellness Hub</h1>
+        <div>
+          <h1 className="title">🐙Inklings🐙</h1>
+          <p className="subtitle">Small splashes lead to big ripples</p>
+        </div>
         <div className="octoHub">
           <div className={`octoLayer ${debugSegments ? 'octoLayer--debug' : ''}`}>
             <OctopusSegments src={octo} progress={octoState.progress} debug={debugSegments} clips={octoClips} />
